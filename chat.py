@@ -10,5 +10,6 @@ def get_completion(prompt: str) -> str:
             {"role": "user", "content": prompt}
         ]
     )
-    print(str(completion.choices[0].message)[31:-58])
-    return str(completion.choices[0].message)[31:-58]
+    completion_content = completion.choices[0].message.content
+    print(completion_content)
+    return completion_content
