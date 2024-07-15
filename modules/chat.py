@@ -7,21 +7,29 @@ from terminal_colors import t_color
 # グローバルでOpenAIのクライエントを定義すると、どこからでも使える
 client = OpenAI()
 
+# 会話のデフォルト設定を設定する
+default_conversation = {
+    "messages": [{"role": "system", "content": "あなたは役にたつアシスタントです。"}],
+    "temperature": 0.7,
+}
+ 
+
 # 会話の履歴とパラメータをロード
 def load_conversation(file_path):
     if os.path.exists(file_path):
         with open(file_path, 'r', encoding="utf-8") as file:
             return json.load(file)
-    return {
-        "messages": [{"role": "system", "content": "あなたは役にたつアシスタントです。"}],
-        "temperature": 0.7,
-    }
+    return default_conversation
 
 # 会話の履歴とパラメータを保存
 def save_conversation(file_path, data):
     with open(file_path, 'w', encoding="utf-8") as file:
         json.dump(data, file, ensure_ascii=False, indent=2)
     
+
+def reset_conversation(file_path):
+    save_conversation(file_path, default_conversation)
+    return default_conversation["messages"], default_conversation["temperature"]
 
 def chat_with_gpt(messages, model="gpt-3.5-turbo", temperature=0.7):
     response = client.chat.completions.create(
@@ -56,6 +64,9 @@ def main():
 
         if user_input.lower() == "reset":
             print("会話の履歴をリセットする")
+            res_messages, res_temp = reset_conversation(file_path)
+            messages = res_messages
+            temperature = res_temp
             continue
 
         messages.append({"role": "user", "content": user_input})
