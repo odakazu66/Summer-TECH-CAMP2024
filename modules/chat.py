@@ -2,6 +2,8 @@ from openai import OpenAI
 import os
 import json
 
+from terminal_colors import t_color
+
 # グローバルでOpenAIのクライエントを定義すると、どこからでも使える
 client = OpenAI()
 
@@ -40,9 +42,9 @@ def main():
 
     # 最初の説明
     print("これはコマンドラインでchatGPTと対話するシステムです")
-    print("中断するためには exit と入力してください")
-    print("会話の記録をリセットするためには reset と入力してください")
-    print("会話の履歴は conversation.json というファイルに保存される")
+    print(f"中断するためには {t_color.RED}exit{t_color.RESET} と入力してください")
+    print(f"会話の記録をリセットするためには {t_color.RED}reset{t_color.RESET} と入力してください")
+    print(f"会話の履歴は {t_color.GREEN}conversation.json{t_color.RESET} というファイルに保存される")
     print()
 
     while True:
