@@ -8,7 +8,7 @@ client = OpenAI()
 # 会話の履歴とパラメータをロード
 def load_conversation(file_path):
     if os.path.exists(file_path):
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding="utf-8") as file:
             return json.load(file)
     return {
         "messages": [{"role": "system", "content": "あなたは役にたつアシスタントです。"}],
@@ -17,8 +17,8 @@ def load_conversation(file_path):
 
 # 会話の履歴とパラメータを保存
 def save_conversation(file_path, data):
-    with open(file_path, 'w') as file:
-        json.dump(data, file, indent=2)
+    with open(file_path, 'w', encoding="utf-8") as file:
+        json.dump(data, file, ensure_ascii=False, indent=2)
     
 
 def chat_with_gpt(messages, model="gpt-3.5-turbo", temperature=0.7):
