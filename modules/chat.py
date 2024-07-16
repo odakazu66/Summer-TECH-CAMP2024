@@ -5,7 +5,6 @@
 from openai import OpenAI
 import os
 import json
-from .terminal_colors import t_color
 
 
 # グローバルでOpenAIのクライエントを定義すると、どこからでも使える
@@ -118,4 +117,5 @@ def main():
     save_conversation(file_path, data)
 
 if __name__ == "__main__":
+    from terminal_colors import t_color
     main()
