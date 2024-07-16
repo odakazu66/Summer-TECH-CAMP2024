@@ -1,3 +1,7 @@
+# TODO:
+# [] 他の部分とのインターフェースをつくr
+# [] このファイルをクラス化する 
+
 from openai import OpenAI
 import os
 import json
@@ -41,6 +45,9 @@ def chat_with_gpt(messages, model="gpt-3.5-turbo", temperature=0.7):
     response_content =  response.choices[0].message.content
     print("chatGPT: ", response_content)
     return response_content
+
+# to implement
+# def get_gpt_completion():
 
 def main():
     file_path = "../conversation.json"
