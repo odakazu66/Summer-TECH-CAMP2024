@@ -67,13 +67,12 @@ def get_gpt_completion(transcript):
 
     try:
         response = chat_with_gpt(messages, temperature=temperature)
-        messages.append({"role": "assistant", "content": response})
     except Exception as e:
         print(f"Error: {e}")
         exit(1)
 
-    messages.append({"role": "user", "content": transcript})
-
+    messages.append({"role": "assistant", "content": response})
+    
     # 会話を保存
     data["messages"] = messages
     save_conversation(file_path, data)
