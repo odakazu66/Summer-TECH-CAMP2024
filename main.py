@@ -2,6 +2,7 @@ import argparse
 from modules.transcribe import transcribe_file
 from modules.chat import get_completion
 from modules.synthesize import synthesize_speech
+from modules.playback import playback
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="音声ファイルを文字起こしして翻訳し、音声に合成するスクリプト")
@@ -11,3 +12,4 @@ if __name__ == "__main__":
     transcript = transcribe_file(args.path)
     completion = get_completion(transcript)
     synthesize_speech(completion, "output.wav")
+    playback("output.wav")
