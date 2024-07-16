@@ -9,7 +9,7 @@ import json
 
 # グローバルでOpenAIのクライエントを定義すると、どこからでも使える
 client = OpenAI()
-file_path = "../conversation.json"
+file_path = "conversation.json"
 
 
 # 会話のデフォルト設定を設定する
@@ -75,7 +75,6 @@ def get_gpt_completion(transcript):
     messages.append({"role": "user", "content": transcript})
 
     # 会話を保存
-    print(messages)
     data["messages"] = messages
     save_conversation(file_path, data)
     return response
