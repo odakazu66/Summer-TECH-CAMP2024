@@ -6,10 +6,11 @@ from openai import OpenAI
 import os
 import json
 
-from terminal_colors import t_color
 
 # グローバルでOpenAIのクライエントを定義すると、どこからでも使える
 client = OpenAI()
+file_path = "../conversation.json"
+
 
 # 会話のデフォルト設定を設定する
 default_conversation = {
@@ -47,7 +48,37 @@ def chat_with_gpt(messages, model="gpt-3.5-turbo", temperature=0.7):
     return response_content
 
 # to implement
-# def get_gpt_completion():
+def get_gpt_completion(transcript):
+    """
+    main()関数の代わりになる。外部と一緒に最も使われるインターフェース。
+    音声認識が終わって、この関数が呼ばれると、以下の流れが行われる。
+    1. 音声認識の結果をmessagesに入れる
+    2. chat_with_gptを呼ぶ
+    3. 返事をmessagesに入れる
+    4. 会話を conversation.json 記録する
+    5. responseを返す
+    """
+    data = load_conversation(file_path)
+    messages = data["messages"]
+    temperature = data["temperature"]
+    response = ""
+
+    messages.append({"role": "user", "content": transcript})
+
+    try:
+        response = chat_with_gpt(messages, temperature=temperature)
+        messages.append({"role": "assistant", "content": response})
+    except Exception as e:
+        print(f"Error: {e}")
+        exit(1)
+
+    messages.append({"role": "user", "content": transcript})
+
+    # 会話を保存
+    print(messages)
+    data["messages"] = messages
+    save_conversation(file_path, data)
+    return response
 
 def main():
     file_path = "../conversation.json"
@@ -88,4 +119,5 @@ def main():
     save_conversation(file_path, data)
 
 if __name__ == "__main__":
+    from terminal_colors import t_color
     main()

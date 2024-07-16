@@ -1,6 +1,6 @@
 import argparse
 from modules.transcribe import transcribe_file
-# from modules.chat import get_gpt_completion
+from modules.chat import get_gpt_completion
 from modules.synthesize import synthesize_speech
 
 if __name__ == "__main__":
@@ -9,5 +9,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     transcript = transcribe_file(args.path)
-    # completion = get_gpt_completion(transcript)
+    completion = get_gpt_completion(transcript)
     synthesize_speech(completion, "output.wav")
