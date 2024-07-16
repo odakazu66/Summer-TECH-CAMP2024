@@ -6,7 +6,7 @@ import numpy as np
 # 音声録音パラメータ
 FORMAT = pyaudio.paInt16  # 16ビットの音声フォーマット
 CHANNELS = 1  # モノラル
-RATE = 16000  # サンプリングレート
+RATE = 44100  # サンプリングレート
 CHUNK = 1024  # チャンクサイズ
 THRESHOLD = 500  # 音声検出の閾値
 SILENCE_DURATION = 2  # 無音と判定する秒数
