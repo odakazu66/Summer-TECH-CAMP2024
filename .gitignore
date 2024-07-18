@@ -1,4 +1,5 @@
 __pycache__/
 venv/
-conversation.json
-*.wav
+conversation.json/
+output.wav/
+
