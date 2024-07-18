@@ -14,7 +14,7 @@ file_path = "conversation.json"
 
 # 会話のデフォルト設定を設定する
 default_conversation = {
-    "messages": [{"role": "system", "content": "あなたは役にたつアシスタントです。"}],
+    "messages": [{"role": "system", "content": "文字制限は20文字以内。あなたは役にたつアシスタントです。"}],
     "temperature": 0.7,
 }
  
