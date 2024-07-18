@@ -5,8 +5,9 @@ from modules.playback import playback
 from modules.record import record_audio
 
 if __name__ == "__main__":
-    wav_path = record_audio()
-    transcript = transcribe_file(wav_path)
-    completion = get_gpt_completion(transcript)
-    synthesize_speech(completion, "output.wav")
-    playback("output.wav")
+    while True:  
+        wav_path = record_audio()
+        transcript = transcribe_file(wav_path)
+        completion = get_gpt_completion(transcript)
+        synthesize_speech(completion, "output.wav")
+        playback("output.wav")
