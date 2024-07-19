@@ -1,4 +1,5 @@
 import sys
+import threading
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit, QVBoxLayout, QWidget
 from PyQt5.QtCore import QThread, pyqtSignal
 from modules.transcribe import transcribe_file
@@ -12,11 +13,16 @@ class VoiceInteractionThread(QThread):
 
     def __init__(self):
         super().__init__()
-        self.running = False
+        #self.running = False
+        self.running_event = threading.Event()
+        self.running_event.clear()
+
 
     def run(self):
-        while self.running:
-            wav_path = record_audio()
+        while self.running_event.is_set():
+            wav_path = record_audio(self.running_event)
+            if not self.running_event.is_set():
+                break
             transcript = transcribe_file(wav_path)
             self.update_chat.emit("You", transcript)
             completion = get_gpt_completion(transcript)
@@ -25,11 +31,13 @@ class VoiceInteractionThread(QThread):
             playback("output.wav")
 
     def start_interaction(self):
-        self.running = True
+        #self.running = True
+        self.running_event.set()
         self.start()
 
     def stop_interaction(self):
-        self.running = False
+        self.running_event.clear()
+        #self.running = False
 
 class MainWindow(QMainWindow):
     def __init__(self):
