@@ -1,13 +1,84 @@
+import sys
+import threading
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit, QVBoxLayout, QWidget
+from PyQt5.QtCore import QThread, pyqtSignal
 from modules.transcribe import transcribe_file
 from modules.chat import get_gpt_completion
 from modules.synthesize import synthesize_speech
 from modules.playback import playback
 from modules.record import record_audio
 
+class VoiceInteractionThread(QThread):
+    update_chat = pyqtSignal(str, str)
+
+    def __init__(self):
+        super().__init__()
+        #self.running = False
+        self.running_event = threading.Event()
+        self.running_event.clear()
+
+
+    def run(self):
+        while self.running_event.is_set():
+            wav_path = record_audio(self.running_event)
+            if not self.running_event.is_set():
+                break
+            transcript = transcribe_file(wav_path)
+            self.update_chat.emit("You", transcript)
+            completion = get_gpt_completion(transcript)
+            self.update_chat.emit("GPT", completion)
+            synthesize_speech(completion, "output.wav")
+            playback("output.wav")
+
+    def start_interaction(self):
+        #self.running = True
+        self.running_event.set()
+        self.start()
+
+    def stop_interaction(self):
+        self.running_event.clear()
+        #self.running = False
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.initUI()
+        self.voice_thread = VoiceInteractionThread()
+        self.voice_thread.update_chat.connect(self.update_chat)
+
+    def initUI(self):
+        self.setWindowTitle("Voice Interaction System")
+
+        self.chat_display = QTextEdit()
+        self.chat_display.setReadOnly(True)
+
+        self.mic_button = QPushButton("Start Interaction")
+        self.mic_button.setCheckable(True)
+        self.mic_button.clicked.connect(self.toggle_interaction)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.chat_display)
+        layout.addWidget(self.mic_button)
+
+        container = QWidget()
+        container.setLayout(layout)
+        self.setCentralWidget(container)
+
+    def toggle_interaction(self, checked):
+        if checked:
+            self.mic_button.setText("Stop Interaction")
+            self.voice_thread.start_interaction()
+        else:
+            self.mic_button.setText("Start Interaction")
+            self.voice_thread.stop_interaction()
+
+    def update_chat(self, sender, message):
+        self.chat_display.append(f"{sender}: {message}")
+
 if __name__ == "__main__":
-    while True:  
-        wav_path = record_audio()
-        transcript = transcribe_file(wav_path)
-        completion = get_gpt_completion(transcript)
-        synthesize_speech(completion, "output.wav")
-        playback("output.wav")
+    app = QApplication(sys.argv)
+    mainWindow = MainWindow()
+    mainWindow.show()
+    sys.exit(app.exec_())
+
