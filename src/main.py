@@ -1,7 +1,6 @@
-# main.py
 import sys
 import threading
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit, QVBoxLayout, QWidget, QHBoxLayout, QComboBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit, QVBoxLayout, QWidget, QHBoxLayout, QComboBox, QLabel, QLineEdit
 from PyQt5.QtCore import QThread, pyqtSignal
 from modules.transcribe import transcribe_file
 from modules.chat import get_gpt_completion
@@ -57,9 +56,11 @@ class MainWindow(QMainWindow):
         self.initUI()
         self.voice_thread = VoiceInteractionThread()
         self.voice_thread.update_chat.connect(self.update_chat)
+        self.gpt_name = "GPT"  # Default GPT name
 
     def initUI(self):
         self.setWindowTitle("Voice Interaction System")
+        self.resize(800, 600)  # Set the window size to 800x600
 
         self.chat_display = QTextEdit()
         self.chat_display.setReadOnly(True)
@@ -76,6 +77,10 @@ class MainWindow(QMainWindow):
         self.voice_selection.addItems(["ja-JP-Standard-A", "ja-JP-Standard-B", "ja-JP-Standard-C", "ja-JP-Standard-D"])
         self.voice_selection.currentTextChanged.connect(self.update_voice_selection)
 
+        self.gpt_name_input = QLineEdit()
+        self.gpt_name_input.setPlaceholderText("Enter GPT Name")
+        self.gpt_name_input.textChanged.connect(self.update_gpt_name)
+
         layout = QVBoxLayout()
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.mic_button)
@@ -83,6 +88,7 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(self.chat_display)
         layout.addWidget(self.voice_selection)
+        layout.addWidget(self.gpt_name_input)
         layout.addLayout(button_layout)
 
         container = QWidget()
@@ -100,7 +106,8 @@ class MainWindow(QMainWindow):
             self.stop_recording_button.setEnabled(False)
 
     def update_chat(self, sender, message):
-        self.chat_display.append(f"{sender}: {message}")
+        display_name = sender if sender != "GPT" else self.gpt_name
+        self.chat_display.append(f"{display_name}: {message}")
         self.voice_thread.start_recording()
         self.stop_recording_button.setEnabled(True)
 
@@ -110,6 +117,9 @@ class MainWindow(QMainWindow):
 
     def update_voice_selection(self, voice_name):
         self.voice_thread.set_voice(voice_name)
+
+    def update_gpt_name(self, name):
+        self.gpt_name = name
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
