@@ -1,6 +1,7 @@
+# main.py
 import sys
 import threading
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit, QVBoxLayout, QWidget, QHBoxLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit, QVBoxLayout, QWidget, QHBoxLayout, QComboBox
 from PyQt5.QtCore import QThread, pyqtSignal
 from modules.transcribe import transcribe_file
 from modules.chat import get_gpt_completion
@@ -17,7 +18,7 @@ class VoiceInteractionThread(QThread):
         self.recording_event = threading.Event()
         self.running_event.clear()
         self.recording_event.clear()
-
+        self.voice_name = "ja-JP-Standard-A"  # Default voice name
 
     def run(self):
         while self.running_event.is_set():
@@ -28,7 +29,7 @@ class VoiceInteractionThread(QThread):
             self.update_chat.emit("You", transcript)
             completion = get_gpt_completion(transcript)
             self.update_chat.emit("GPT", completion)
-            synthesize_speech(completion, "output.wav")
+            synthesize_speech(completion, "output.wav", self.voice_name)
             playback("output.wav")
 
     def start_interaction(self):
@@ -42,8 +43,12 @@ class VoiceInteractionThread(QThread):
 
     def stop_recording(self):
         self.recording_event.clear()
+
     def start_recording(self):
         self.recording_event.set()
+
+    def set_voice(self, voice_name):
+        self.voice_name = voice_name
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -67,12 +72,17 @@ class MainWindow(QMainWindow):
         self.stop_recording_button.clicked.connect(self.stop_recording)
         self.stop_recording_button.setEnabled(False)
 
+        self.voice_selection = QComboBox()
+        self.voice_selection.addItems(["ja-JP-Standard-A", "ja-JP-Standard-B", "ja-JP-Standard-C", "ja-JP-Standard-D"])
+        self.voice_selection.currentTextChanged.connect(self.update_voice_selection)
+
         layout = QVBoxLayout()
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.mic_button)
         button_layout.addWidget(self.stop_recording_button)
 
         layout.addWidget(self.chat_display)
+        layout.addWidget(self.voice_selection)
         layout.addLayout(button_layout)
 
         container = QWidget()
@@ -98,9 +108,11 @@ class MainWindow(QMainWindow):
         self.voice_thread.stop_recording()
         self.stop_recording_button.setEnabled(False)
 
+    def update_voice_selection(self, voice_name):
+        self.voice_thread.set_voice(voice_name)
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     mainWindow = MainWindow()
     mainWindow.show()
     sys.exit(app.exec_())
-
