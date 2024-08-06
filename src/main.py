@@ -1,7 +1,9 @@
 import sys
 import threading
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit, QVBoxLayout, QWidget, QHBoxLayout, QComboBox, QLabel, QLineEdit
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget,
+                             QHBoxLayout, QComboBox, QLabel, QLineEdit, QScrollArea, QFrame, QSpacerItem, QSizePolicy)
+from PyQt5.QtCore import QThread, pyqtSignal, Qt
+from PyQt5.QtGui import QColor, QFont
 from modules.transcribe import transcribe_file
 from modules.chat import get_gpt_completion
 from modules.synthesize import synthesize_speech
@@ -50,6 +52,8 @@ class VoiceInteractionThread(QThread):
         self.voice_name = voice_name
 
 class MainWindow(QMainWindow):
+    scroll_to_bottom_signal = pyqtSignal()
+
     def __init__(self):
         super().__init__()
 
@@ -57,13 +61,20 @@ class MainWindow(QMainWindow):
         self.voice_thread = VoiceInteractionThread()
         self.voice_thread.update_chat.connect(self.update_chat)
         self.gpt_name = "GPT"  # Default GPT name
+        self.scroll_to_bottom_signal.connect(self.scroll_to_bottom)
 
     def initUI(self):
         self.setWindowTitle("Voice Interaction System")
         self.resize(800, 600)  # Set the window size to 800x600
 
-        self.chat_display = QTextEdit()
-        self.chat_display.setReadOnly(True)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        
+        self.chat_widget = QWidget()
+        self.chat_layout = QVBoxLayout(self.chat_widget)
+        self.chat_layout.addStretch(1)
+        
+        self.scroll_area.setWidget(self.chat_widget)
 
         self.mic_button = QPushButton("Start Interaction")
         self.mic_button.setCheckable(True)
@@ -86,7 +97,7 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(self.mic_button)
         button_layout.addWidget(self.stop_recording_button)
 
-        layout.addWidget(self.chat_display)
+        layout.addWidget(self.scroll_area)
         layout.addWidget(self.voice_selection)
         layout.addWidget(self.gpt_name_input)
         layout.addLayout(button_layout)
@@ -107,7 +118,7 @@ class MainWindow(QMainWindow):
 
     def update_chat(self, sender, message):
         display_name = sender if sender != "GPT" else self.gpt_name
-        self.chat_display.append(f"{display_name}: {message}")
+        self.append_chat_message(display_name, message)
         self.voice_thread.start_recording()
         self.stop_recording_button.setEnabled(True)
 
@@ -120,6 +131,38 @@ class MainWindow(QMainWindow):
 
     def update_gpt_name(self, name):
         self.gpt_name = name
+
+    def append_chat_message(self, sender, message):
+        bubble = self.create_bubble(sender, message)
+        self.chat_layout.insertWidget(self.chat_layout.count() - 1, bubble)
+        self.scroll_to_bottom_signal.emit()
+
+    def create_bubble(self, sender, message):
+        bubble = QFrame()
+        bubble_layout = QVBoxLayout(bubble)
+        
+        bubble_label = QLabel(message)
+        bubble_label.setWordWrap(True)
+        bubble_label.setFont(QFont("Arial", 12))
+        bubble_label.setStyleSheet(f"background-color: {'#E0F7FA' if sender == 'You' else '#E1FFC7'}; border-radius: 15px; padding: 10px;")
+
+        sender_label = QLabel(sender)
+        sender_label.setFont(QFont("Arial", 10, QFont.Bold))
+        sender_label.setStyleSheet("color: gray;")
+
+        bubble_layout.addWidget(sender_label)
+        bubble_layout.addWidget(bubble_label)
+        bubble_layout.addStretch(1)
+
+        if sender == "You":
+            bubble.setStyleSheet("margin: 10px 0px 10px 100px;")
+        else:
+            bubble.setStyleSheet("margin: 10px 100px 10px 0px;")
+
+        return bubble
+
+    def scroll_to_bottom(self):
+        self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum())
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
