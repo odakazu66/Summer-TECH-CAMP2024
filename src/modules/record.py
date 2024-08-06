@@ -15,7 +15,7 @@ def is_silent(data, threshold=THRESHOLD):
     """データが無音かどうかを判定"""
     return max(data) < threshold
 
-def record_audio(running_event):
+def record_audio(running_event, recording_event):
     """音声を録音し、wavファイルとして保存する"""
     audio = pyaudio.PyAudio()
 
@@ -30,7 +30,7 @@ def record_audio(running_event):
     silent_chunks = 0
     recording_started = False
 
-    while running_event.is_set():
+    while running_event.is_set() and recording_event.is_set():
         data = stream.read(CHUNK)
         data_int = np.frombuffer(data, dtype=np.int16)
 
