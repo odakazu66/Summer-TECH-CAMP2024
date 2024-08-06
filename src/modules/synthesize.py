@@ -1,12 +1,13 @@
+# synthesize.py
 from google.cloud import texttospeech
 
-def synthesize_speech(text: str, output_file: str):
+def synthesize_speech(text: str, output_file: str, voice_name: str):
     client = texttospeech.TextToSpeechClient()
 
     synthesis_input = texttospeech.SynthesisInput(text=text)
 
     voice = texttospeech.VoiceSelectionParams(
-        name="ja-JP-Standard-B",
+        name=voice_name,
         language_code="ja-JP",
         ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL
     )
