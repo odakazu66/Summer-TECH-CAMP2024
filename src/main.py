@@ -13,7 +13,6 @@ class VoiceInteractionThread(QThread):
 
     def __init__(self):
         super().__init__()
-        #self.running = False
         self.running_event = threading.Event()
         self.recording_event = threading.Event()
         self.running_event.clear()
@@ -33,7 +32,6 @@ class VoiceInteractionThread(QThread):
             playback("output.wav")
 
     def start_interaction(self):
-        #self.running = True
         self.running_event.set()
         self.recording_event.set()
         self.start()
@@ -41,7 +39,7 @@ class VoiceInteractionThread(QThread):
     def stop_interaction(self):
         self.running_event.clear()
         self.recording_event.clear()
-        #self.running = False
+
     def stop_recording(self):
         self.recording_event.clear()
     def start_recording(self):
