@@ -1,7 +1,7 @@
 import sys
 import threading
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget,
-                             QHBoxLayout, QComboBox, QLabel, QLineEdit, QScrollArea, QFrame, QSpacerItem, QSizePolicy)
+                             QHBoxLayout, QComboBox, QLabel, QLineEdit, QScrollArea, QFrame, QScrollBar)
 from PyQt5.QtCore import QThread, pyqtSignal, Qt
 from PyQt5.QtGui import QColor, QFont
 from modules.transcribe import transcribe_file
@@ -51,17 +51,15 @@ class VoiceInteractionThread(QThread):
     def set_voice(self, voice_name):
         self.voice_name = voice_name
 
-class MainWindow(QMainWindow):
-    scroll_to_bottom_signal = pyqtSignal()
+from PyQt5.QtCore import QTimer
 
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
         self.initUI()
         self.voice_thread = VoiceInteractionThread()
         self.voice_thread.update_chat.connect(self.update_chat)
         self.gpt_name = "GPT"  # Default GPT name
-        self.scroll_to_bottom_signal.connect(self.scroll_to_bottom)
 
     def initUI(self):
         self.setWindowTitle("Voice Interaction System")
@@ -135,7 +133,14 @@ class MainWindow(QMainWindow):
     def append_chat_message(self, sender, message):
         bubble = self.create_bubble(sender, message)
         self.chat_layout.insertWidget(self.chat_layout.count() - 1, bubble)
-        self.scroll_to_bottom_signal.emit()
+        self.chat_widget.adjustSize()
+
+        # Call scroll_to_bottom with a slight delay
+        QTimer.singleShot(100, self.scroll_to_bottom)
+
+    def scroll_to_bottom(self):
+        scrollbar = self.scroll_area.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
 
     def create_bubble(self, sender, message):
         bubble = QFrame()
@@ -143,26 +148,24 @@ class MainWindow(QMainWindow):
         
         bubble_label = QLabel(message)
         bubble_label.setWordWrap(True)
-        bubble_label.setFont(QFont("Arial", 12))
-        bubble_label.setStyleSheet(f"background-color: {'#E0F7FA' if sender == 'You' else '#E1FFC7'}; border-radius: 15px; padding: 10px;")
-
+        bubble_label.setFont(QFont("Arial", 10))
+        bubble_label.setStyleSheet("color: black; background-color: {}; border-radius: 15px; padding: 10px;".format('#E0F7FA' if sender == 'You' else '#E1FFC7'))
+    
         sender_label = QLabel(sender)
         sender_label.setFont(QFont("Arial", 10, QFont.Bold))
-        sender_label.setStyleSheet("color: gray;")
+        sender_label.setStyleSheet("color: gray;")  # 名前の色
 
         bubble_layout.addWidget(sender_label)
         bubble_layout.addWidget(bubble_label)
         bubble_layout.addStretch(1)
 
         if sender == "You":
-            bubble.setStyleSheet("margin: 10px 0px 10px 100px;")
+            bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
         else:
-            bubble.setStyleSheet("margin: 10px 100px 10px 0px;")
+            bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
 
         return bubble
 
-    def scroll_to_bottom(self):
-        self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum())
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
