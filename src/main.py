@@ -2,7 +2,7 @@ import sys
 import threading
 import qtawesome as qta
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget,
-                             QHBoxLayout, QComboBox, QLabel, QLineEdit, QScrollArea, QFrame, QSpacerItem, QSizePolicy)
+                             QHBoxLayout, QComboBox, QLabel, QLineEdit, QScrollArea, QFrame, QSpacerItem, QSizePolicy, QScrollBar)
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QColor, QFont
 from modules.transcribe import transcribe_file
@@ -59,7 +59,6 @@ class MainWindow(QMainWindow):
         self.voice_thread = VoiceInteractionThread()
         self.voice_thread.update_chat.connect(self.update_chat)
         self.gpt_name = "GPT"  # Default GPT name
-    
 
     def initUI(self):
         self.setWindowTitle("Voice Interaction System")
@@ -200,7 +199,6 @@ class MainWindow(QMainWindow):
         self.chat_layout.insertWidget(self.chat_layout.count() - 1, bubble)
         self.chat_widget.adjustSize()
 
-         # Call scroll_to_bottom with a slight delay
         QTimer.singleShot(100, self.scroll_to_bottom)
 
     def scroll_to_bottom(self):
@@ -213,26 +211,25 @@ class MainWindow(QMainWindow):
         
         bubble_label = QLabel(message)
         bubble_label.setWordWrap(True)
-        bubble_label.setFont(QFont("メイリオ", 12))
-        bubble_label.setStyleSheet(f"background-color: {'#E0F7FA' if sender == 'You' else '#E1FFC7'}; border-radius: 15px; padding: 10px;")
 
+        bubble_label.setFont(QFont("メイリオ", 12))
+        bubble_label.setStyleSheet("color: black; background-color: {}; border-radius: 15px; padding: 10px;".format('#E0F7FA' if sender == 'You' else '#E1FFC7'))
+    
         sender_label = QLabel(sender)
         sender_label.setFont(QFont("メイリオ", 10, QFont.Bold))
-        sender_label.setStyleSheet("color: gray;")
+        sender_label.setStyleSheet("color: gray;")  # 名前の色
 
         bubble_layout.addWidget(sender_label)
         bubble_layout.addWidget(bubble_label)
         bubble_layout.addStretch(1)
 
         if sender == "You":
-            bubble.setStyleSheet("margin: 10px 0px 10px 100px;")
+            bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
         else:
-            bubble.setStyleSheet("margin: 10px 100px 10px 0px;")
+            bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
 
         return bubble
 
-    def scroll_to_bottom(self):
-        self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum())
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
