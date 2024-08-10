@@ -233,14 +233,13 @@ class MainWindow(QMainWindow):
         bubble_layout.addWidget(bubble_label)
         bubble_layout.addStretch(1)
 
-
-        if sender == "You":
-            sender_icon = ClickableLabel("You", self.user_icon_path)
+        if sender == self.user_name:
+            sender_icon = ClickableLabel(self.user_name, self.user_icon_path)
             bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
             bubble_container.addWidget(bubble)
             bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
         else:
-            sender_icon = ClickableLabel("GPT", self.gpt_icon_path)
+            sender_icon = ClickableLabel(self.gpt_name, self.gpt_icon_path)
             bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
             bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
             bubble_container.addWidget(bubble)
@@ -253,7 +252,7 @@ class MainWindow(QMainWindow):
     def on_icon_clicked(self, id):
         print(str(id) + " icon was clicked")
 
-        if ( id == "You"):
+        if id == "You":
             dialog = UserProfileDialog(self)
         else:
             dialog = GPTProfileDialog(self)
@@ -264,9 +263,11 @@ class MainWindow(QMainWindow):
         else:
             print("not applied")
 
-    def update_chat_names(self, old_name, new_name):
-        old_gpt_name = old_name
-        self.set_gpt_name(new_name)
+    def update_chat_names(self, dialog_id, old_name, new_name):
+        if dialog_id == "You":
+            self.set_user_name(new_name)
+        else:
+            self.set_gpt_name(new_name)
 
         # Loop through all items in the chat layout
         for i in range(self.chat_layout.count() - 1):  # Exclude the last item (stretch)
@@ -287,7 +288,7 @@ class MainWindow(QMainWindow):
                             # The first item in the QVBoxLayout is the sender label
                             sender_label = bubble_layout.itemAt(0).widget()
                             if isinstance(sender_label, QLabel):
-                                if sender_label.text() == old_gpt_name:
+                                if sender_label.text() == old_name:
                                     # Update the sender name
                                     sender_label.setText(new_name)
 
@@ -322,6 +323,9 @@ class MainWindow(QMainWindow):
 
     def set_gpt_name(self, name):
         self.gpt_name = name
+
+    def set_user_name(self, name):
+        self.user_name = name
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
