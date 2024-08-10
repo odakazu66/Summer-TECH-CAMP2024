@@ -4,12 +4,15 @@ import qtawesome as qta
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget,
                              QHBoxLayout, QComboBox, QLabel, QLineEdit, QScrollArea, QFrame, QSpacerItem, QSizePolicy, QScrollBar)
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
-from PyQt5.QtGui import QColor, QFont
+from PyQt5.QtGui import QColor, QFont, QPixmap, QCursor
 from modules.transcribe import transcribe_file
 from modules.chat import get_gpt_completion
 from modules.synthesize import synthesize_speech
 from modules.playback import playback
 from modules.record import record_audio
+from gui.clickable_label import ClickableLabel
+from gui.user_profile_dialog import UserProfileDialog
+from gui.gpt_profile_dialog import GPTProfileDialog
 
 class VoiceInteractionThread(QThread):
     update_chat = pyqtSignal(str, str)
@@ -59,6 +62,10 @@ class MainWindow(QMainWindow):
         self.voice_thread = VoiceInteractionThread()
         self.voice_thread.update_chat.connect(self.update_chat)
         self.gpt_name = "GPT"  # Default GPT name
+        self.user_name = "You"
+        self.user_icon_path = "../images/student-icon.png"
+        self.gpt_icon_path = "../images/chatgpt-icon.png"
+        self.chat_bubbles_list = []
 
     def initUI(self):
         self.setWindowTitle("Voice Interaction System")
@@ -179,7 +186,8 @@ class MainWindow(QMainWindow):
             self.keyboard_input.clear()
 
     def update_chat(self, sender, message):
-        display_name = sender if sender != "GPT" else self.gpt_name
+        # display_name = sender if sender != "GPT" else self.gpt_name
+        display_name = self.user_name if sender == "You" else self.gpt_name
         self.append_chat_message(display_name, message)
         self.voice_thread.start_recording()
         self.stop_recording_button.setEnabled(True)
@@ -196,7 +204,7 @@ class MainWindow(QMainWindow):
 
     def append_chat_message(self, sender, message):
         bubble = self.create_bubble(sender, message)
-        self.chat_layout.insertWidget(self.chat_layout.count() - 1, bubble)
+        self.chat_layout.insertLayout(self.chat_layout.count() - 1, bubble)
         self.chat_widget.adjustSize()
 
         QTimer.singleShot(100, self.scroll_to_bottom)
@@ -207,6 +215,8 @@ class MainWindow(QMainWindow):
 
     def create_bubble(self, sender, message):
         bubble = QFrame()
+        bubble.setObjectName("bubble_frame")
+        bubble_container = QHBoxLayout()
         bubble_layout = QVBoxLayout(bubble)
         
         bubble_label = QLabel(message)
@@ -223,13 +233,99 @@ class MainWindow(QMainWindow):
         bubble_layout.addWidget(bubble_label)
         bubble_layout.addStretch(1)
 
-        if sender == "You":
+        if sender == self.user_name:
+            sender_icon = ClickableLabel(self.user_name, self.user_icon_path)
             bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
+            bubble_container.addWidget(bubble)
+            bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
         else:
+            sender_icon = ClickableLabel(self.gpt_name, self.gpt_icon_path)
             bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
+            bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
+            bubble_container.addWidget(bubble)
 
-        return bubble
+        # make icon clickable
+        sender_icon.clicked.connect(self.on_icon_clicked)
 
+        return bubble_container
+
+    def on_icon_clicked(self, id):
+        print(str(id) + " icon was clicked")
+
+        if id == "You":
+            dialog = UserProfileDialog(self)
+        else:
+            dialog = GPTProfileDialog(self)
+
+        result = dialog.exec()
+        if result:
+            print("applied")
+        else:
+            print("not applied")
+
+    def update_chat_names(self, dialog_id, old_name, new_name):
+        if dialog_id == "You":
+            self.set_user_name(new_name)
+        else:
+            self.set_gpt_name(new_name)
+
+        # Loop through all items in the chat layout
+        for i in range(self.chat_layout.count() - 1):  # Exclude the last item (stretch)
+            # Get the layout containing the bubble container (QHBoxLayout)
+            bubble_container = self.chat_layout.itemAt(i).layout()
+
+            if bubble_container is not None:
+                # Loop through the items in the bubble container to find the QFrame (chat bubble)
+                for j in range(bubble_container.count()):
+                    item = bubble_container.itemAt(j).widget()
+                    if isinstance(item, QFrame):  # Ensure the item is a QFrame (chat bubble)
+                        bubble = item
+
+                        # Get the QVBoxLayout inside the QFrame
+                        bubble_layout = bubble.layout()
+
+                        if bubble_layout is not None:
+                            # The first item in the QVBoxLayout is the sender label
+                            sender_label = bubble_layout.itemAt(0).widget()
+                            if isinstance(sender_label, QLabel):
+                                if sender_label.text() == old_name:
+                                    # Update the sender name
+                                    sender_label.setText(new_name)
+
+    def update_user_icons(self, user, icon_path):
+        if user == "You":
+            self.set_user_icon_path(icon_path)
+        else:
+            self.set_gpt_icon_path(icon_path)
+
+        # Loop through all items in the chat layout
+        for i in range(self.chat_layout.count() - 1):  # Exclude the last item (stretch)
+            # Get the layout containing the bubble container (QHBoxLayout)
+            bubble_container = self.chat_layout.itemAt(i).layout()
+
+            if bubble_container is not None:
+                # Loop through the items in the bubble container to find the QFrame (chat bubble)
+                for j in range(bubble_container.count()):
+                    item = bubble_container.itemAt(j).widget()
+                    # to check order or qtItems
+                    # print(type(item))
+                    if isinstance(item, ClickableLabel):
+                        if item.id == "You":
+                            item.set_icon(self.user_icon_path)
+                        else:
+                            item.set_icon(self.gpt_icon_path)
+
+    def set_gpt_icon_path(self, new_icon_path):
+        self.gpt_icon_path = new_icon_path
+
+    def set_user_icon_path(self, new_icon_path):
+        self.user_icon_path = new_icon_path
+
+    def set_gpt_name(self, name):
+        self.gpt_name = name
+
+    def set_user_name(self, name):
+        self.user_name = name
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
