@@ -11,7 +11,8 @@ from modules.synthesize import synthesize_speech
 from modules.playback import playback
 from modules.record import record_audio
 from src.gui.clickable_label import ClickableLabel
-
+from src.gui.user_profile_dialog import UserProfileDialog
+from src.gui.gpt_profile_dialog import GPTProfileDialog
 
 class VoiceInteractionThread(QThread):
     update_chat = pyqtSignal(str, str)
@@ -61,6 +62,8 @@ class MainWindow(QMainWindow):
         self.voice_thread = VoiceInteractionThread()
         self.voice_thread.update_chat.connect(self.update_chat)
         self.gpt_name = "GPT"  # Default GPT name
+        self.user_icon_path = "../images/student-icon.png"
+        self.gpt_icon_path = "../images/chatgpt-icon.png"
 
     def initUI(self):
         self.setWindowTitle("Voice Interaction System")
@@ -230,13 +233,13 @@ class MainWindow(QMainWindow):
         if sender == "You":
             sender_icon = ClickableLabel("You")
             bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
-            sender_pixmap = QPixmap("../images/student-icon.png")
+            sender_pixmap = QPixmap(self.user_icon_path)
             bubble_container.addWidget(bubble)
             bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
         else:
             sender_icon = ClickableLabel("GPT")
             bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
-            sender_pixmap = QPixmap("../images/chatgpt-icon.png")
+            sender_pixmap = QPixmap(self.gpt_icon_path)
             bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
             bubble_container.addWidget(bubble)
 
@@ -252,7 +255,24 @@ class MainWindow(QMainWindow):
         return bubble_container
 
     def on_icon_clicked(self, id):
-        print(str(id) + "icon was clicked")
+        print(str(id) + " icon was clicked")
+
+        if ( id == "You"):
+            dialog = UserProfileDialog()
+        else:
+            dialog = GPTProfileDialog()
+
+        result = dialog.exec()
+        if result:
+            print("applied")
+        else:
+            print("not applied")
+
+    def set_user_icon_path(self, path):
+        self.user_icon_path = path
+
+    def set_gpt_icon_path(self, path):
+        self.gpt_icon_path = path
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
