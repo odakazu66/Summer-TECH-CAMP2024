@@ -43,7 +43,7 @@ class GPTProfileDialog(QDialog):
         print("Apply button clicked")
 
         if self.name_label_entry.text().strip() != "":
-            self.parent.update_chat_names(self.old_gpt_name, self.name_label_entry.text())
+            self.parent.update_chat_names(self.id, self.old_gpt_name, self.name_label_entry.text())
 
         if self.path_input.text() != "":
             self.parent.update_user_icons(self.id, self.path_input.text())
