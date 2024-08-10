@@ -226,14 +226,15 @@ class MainWindow(QMainWindow):
         bubble_layout.addWidget(bubble_label)
         bubble_layout.addStretch(1)
 
-        sender_icon = ClickableLabel()
 
         if sender == "You":
+            sender_icon = ClickableLabel("You")
             bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
             sender_pixmap = QPixmap("../images/student-icon.png")
             bubble_container.addWidget(bubble)
             bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
         else:
+            sender_icon = ClickableLabel("GPT")
             bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
             sender_pixmap = QPixmap("../images/chatgpt-icon.png")
             bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
@@ -250,8 +251,8 @@ class MainWindow(QMainWindow):
 
         return bubble_container
 
-    def on_icon_clicked(self):
-        print("icon was clicked")
+    def on_icon_clicked(self, id):
+        print(str(id) + "icon was clicked")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
