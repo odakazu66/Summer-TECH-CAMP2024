@@ -64,6 +64,7 @@ class MainWindow(QMainWindow):
         self.gpt_name = "GPT"  # Default GPT name
         self.user_icon_path = "../images/student-icon.png"
         self.gpt_icon_path = "../images/chatgpt-icon.png"
+        self.chat_bubbles_list = []
 
     def initUI(self):
         self.setWindowTitle("Voice Interaction System")
@@ -212,6 +213,7 @@ class MainWindow(QMainWindow):
 
     def create_bubble(self, sender, message):
         bubble = QFrame()
+        bubble.setObjectName("bubble_frame")
         bubble_container = QHBoxLayout()
         bubble_layout = QVBoxLayout(bubble)
         
@@ -222,6 +224,8 @@ class MainWindow(QMainWindow):
         bubble_label.setStyleSheet("color: black; background-color: {}; border-radius: 15px; padding: 10px;".format('#E0F7FA' if sender == 'You' else '#E1FFC7'))
     
         sender_label = QLabel(sender)
+        sender_label.setObjectName("NameOfSender")
+        print("label object name: ", sender_label.objectName())
         sender_label.setFont(QFont("メイリオ", 10, QFont.Bold))
         sender_label.setStyleSheet("color: gray;")  # 名前の色
 
@@ -231,25 +235,23 @@ class MainWindow(QMainWindow):
 
 
         if sender == "You":
-            sender_icon = ClickableLabel("You")
+            sender_icon = ClickableLabel("You", self.user_icon_path)
             bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
-            sender_pixmap = QPixmap(self.user_icon_path)
             bubble_container.addWidget(bubble)
             bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
         else:
-            sender_icon = ClickableLabel("GPT")
+            sender_icon = ClickableLabel("GPT", self.gpt_icon_path)
             bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
-            sender_pixmap = QPixmap(self.gpt_icon_path)
             bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
             bubble_container.addWidget(bubble)
 
-        resized_sender_pixmap = sender_pixmap.scaledToHeight(50)
-        sender_icon.setPixmap(resized_sender_pixmap)
-        icon_size = resized_sender_pixmap.size()
-        sender_icon.setFixedSize(icon_size.width(), icon_size.height())
+        # set object name
+        if sender == "You":
+            sender_icon.setObjectName("You_icon")
+        else:
+            sender_icon.setObjectName("GPT_icon")
 
         # make icon clickable
-        sender_icon.setCursor(QCursor(Qt.PointingHandCursor))
         sender_icon.clicked.connect(self.on_icon_clicked)
 
         return bubble_container
@@ -268,14 +270,64 @@ class MainWindow(QMainWindow):
         else:
             print("not applied")
 
+    def update_chat_names(self, old_name, new_name):
+        old_gpt_name = old_name
+        self.set_gpt_name(new_name)
+
+        # Loop through all items in the chat layout
+        for i in range(self.chat_layout.count() - 1):  # Exclude the last item (stretch)
+            # Get the layout containing the bubble container (QHBoxLayout)
+            bubble_container = self.chat_layout.itemAt(i).layout()
+
+            if bubble_container is not None:
+                # Loop through the items in the bubble container to find the QFrame (chat bubble)
+                for j in range(bubble_container.count()):
+                    item = bubble_container.itemAt(j).widget()
+                    if isinstance(item, QFrame):  # Ensure the item is a QFrame (chat bubble)
+                        bubble = item
+
+                        # Get the QVBoxLayout inside the QFrame
+                        bubble_layout = bubble.layout()
+
+                        if bubble_layout is not None:
+                            # The first item in the QVBoxLayout is the sender label
+                            sender_label = bubble_layout.itemAt(0).widget()
+                            if isinstance(sender_label, QLabel):
+                                if sender_label.text() == old_gpt_name:
+                                    # Update the sender name
+                                    sender_label.setText(new_name)
+
+    def update_user_icons(self, user, icon_path):
+        if user == "You":
+            self.set_user_icon_path(icon_path)
+        else:
+            self.set_gpt_icon_path(icon_path)
+
+        # Loop through all items in the chat layout
+        for i in range(self.chat_layout.count() - 1):  # Exclude the last item (stretch)
+            # Get the layout containing the bubble container (QHBoxLayout)
+            bubble_container = self.chat_layout.itemAt(i).layout()
+
+            if bubble_container is not None:
+                # Loop through the items in the bubble container to find the QFrame (chat bubble)
+                for j in range(bubble_container.count()):
+                    item = bubble_container.itemAt(j).widget()
+                    # to check order or qtItems
+                    # print(type(item))
+                    if isinstance(item, ClickableLabel):
+                        if item.id == "You":
+                            item.set_icon(self.user_icon_path)
+                        else:
+                            item.set_icon(self.gpt_icon_path)
+
+    def set_gpt_icon_path(self, new_icon_path):
+        self.gpt_icon_path = new_icon_path
+
+    def set_user_icon_path(self, new_icon_path):
+        self.user_icon_path = new_icon_path
+
     def set_gpt_name(self, name):
         self.gpt_name = name
-
-    def set_user_icon_path(self, path):
-        self.user_icon_path = path
-
-    def set_gpt_icon_path(self, path):
-        self.gpt_icon_path = path
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
