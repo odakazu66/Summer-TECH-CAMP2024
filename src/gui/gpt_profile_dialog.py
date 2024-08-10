@@ -42,7 +42,9 @@ class GPTProfileDialog(QDialog):
     def apply(self):
         print("Apply button clicked")
 
-        self.parent.update_chat_names(self.old_gpt_name, self.name_label_entry.text())
+        if self.name_label_entry.text().strip() != "":
+            self.parent.update_chat_names(self.old_gpt_name, self.name_label_entry.text())
+
         self.parent.update_user_icons(self.id, self.path_input.text())
 
         self.accept()  # Close the dialog with an accept result
