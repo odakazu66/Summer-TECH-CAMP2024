@@ -4,12 +4,14 @@ import qtawesome as qta
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget,
                              QHBoxLayout, QComboBox, QLabel, QLineEdit, QScrollArea, QFrame, QSpacerItem, QSizePolicy, QScrollBar)
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
-from PyQt5.QtGui import QColor, QFont, QPixmap
+from PyQt5.QtGui import QColor, QFont, QPixmap, QCursor
 from modules.transcribe import transcribe_file
 from modules.chat import get_gpt_completion
 from modules.synthesize import synthesize_speech
 from modules.playback import playback
 from modules.record import record_audio
+from src.gui.clickable_label import ClickableLabel
+
 
 class VoiceInteractionThread(QThread):
     update_chat = pyqtSignal(str, str)
@@ -224,7 +226,7 @@ class MainWindow(QMainWindow):
         bubble_layout.addWidget(bubble_label)
         bubble_layout.addStretch(1)
 
-        sender_icon = QLabel()
+        sender_icon = ClickableLabel()
 
         if sender == "You":
             bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
@@ -242,7 +244,14 @@ class MainWindow(QMainWindow):
         icon_size = resized_sender_pixmap.size()
         sender_icon.setFixedSize(icon_size.width(), icon_size.height())
 
+        # make icon clickable
+        sender_icon.setCursor(QCursor(Qt.PointingHandCursor))
+        sender_icon.clicked.connect(self.on_icon_clicked)
+
         return bubble_container
+
+    def on_icon_clicked(self):
+        print("icon was clicked")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
