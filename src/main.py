@@ -62,6 +62,7 @@ class MainWindow(QMainWindow):
         self.voice_thread = VoiceInteractionThread()
         self.voice_thread.update_chat.connect(self.update_chat)
         self.gpt_name = "GPT"  # Default GPT name
+        self.user_name = "You"
         self.user_icon_path = "../images/student-icon.png"
         self.gpt_icon_path = "../images/chatgpt-icon.png"
         self.chat_bubbles_list = []
@@ -224,8 +225,6 @@ class MainWindow(QMainWindow):
         bubble_label.setStyleSheet("color: black; background-color: {}; border-radius: 15px; padding: 10px;".format('#E0F7FA' if sender == 'You' else '#E1FFC7'))
     
         sender_label = QLabel(sender)
-        sender_label.setObjectName("NameOfSender")
-        print("label object name: ", sender_label.objectName())
         sender_label.setFont(QFont("メイリオ", 10, QFont.Bold))
         sender_label.setStyleSheet("color: gray;")  # 名前の色
 
@@ -244,12 +243,6 @@ class MainWindow(QMainWindow):
             bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
             bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
             bubble_container.addWidget(bubble)
-
-        # set object name
-        if sender == "You":
-            sender_icon.setObjectName("You_icon")
-        else:
-            sender_icon.setObjectName("GPT_icon")
 
         # make icon clickable
         sender_icon.clicked.connect(self.on_icon_clicked)
