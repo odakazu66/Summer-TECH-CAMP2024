@@ -4,7 +4,7 @@ import qtawesome as qta
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget,
                              QHBoxLayout, QComboBox, QLabel, QLineEdit, QScrollArea, QFrame, QSpacerItem, QSizePolicy, QScrollBar)
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
-from PyQt5.QtGui import QColor, QFont
+from PyQt5.QtGui import QColor, QFont, QPixmap
 from modules.transcribe import transcribe_file
 from modules.chat import get_gpt_completion
 from modules.synthesize import synthesize_speech
@@ -196,7 +196,7 @@ class MainWindow(QMainWindow):
 
     def append_chat_message(self, sender, message):
         bubble = self.create_bubble(sender, message)
-        self.chat_layout.insertWidget(self.chat_layout.count() - 1, bubble)
+        self.chat_layout.insertLayout(self.chat_layout.count() - 1, bubble)
         self.chat_widget.adjustSize()
 
         QTimer.singleShot(100, self.scroll_to_bottom)
@@ -207,6 +207,7 @@ class MainWindow(QMainWindow):
 
     def create_bubble(self, sender, message):
         bubble = QFrame()
+        bubble_container = QHBoxLayout()
         bubble_layout = QVBoxLayout(bubble)
         
         bubble_label = QLabel(message)
@@ -223,13 +224,25 @@ class MainWindow(QMainWindow):
         bubble_layout.addWidget(bubble_label)
         bubble_layout.addStretch(1)
 
+        sender_icon = QLabel()
+
         if sender == "You":
             bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
+            sender_pixmap = QPixmap("../images/student-icon.png")
+            bubble_container.addWidget(bubble)
+            bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
         else:
             bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
+            sender_pixmap = QPixmap("../images/chatgpt-icon.png")
+            bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
+            bubble_container.addWidget(bubble)
 
-        return bubble
+        resized_sender_pixmap = sender_pixmap.scaledToHeight(50)
+        sender_icon.setPixmap(resized_sender_pixmap)
+        icon_size = resized_sender_pixmap.size()
+        sender_icon.setFixedSize(icon_size.width(), icon_size.height())
 
+        return bubble_container
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
