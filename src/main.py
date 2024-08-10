@@ -186,7 +186,8 @@ class MainWindow(QMainWindow):
             self.keyboard_input.clear()
 
     def update_chat(self, sender, message):
-        display_name = sender if sender != "GPT" else self.gpt_name
+        # display_name = sender if sender != "GPT" else self.gpt_name
+        display_name = self.user_name if sender == "You" else self.gpt_name
         self.append_chat_message(display_name, message)
         self.voice_thread.start_recording()
         self.stop_recording_button.setEnabled(True)
