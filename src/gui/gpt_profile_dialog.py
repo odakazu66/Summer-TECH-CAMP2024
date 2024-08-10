@@ -8,7 +8,7 @@ class GPTProfileDialog(QDialog):
         self.id = "GPT"
 
         layout = QVBoxLayout()
-        self.setWindowTitle("User Settings")
+        self.setWindowTitle("Chatbot Settings")
 
         name_label = QLabel("Name:")
         self.name_label_entry = QLineEdit()
