@@ -10,9 +10,9 @@ from modules.chat import get_gpt_completion
 from modules.synthesize import synthesize_speech
 from modules.playback import playback
 from modules.record import record_audio
-from src.gui.clickable_label import ClickableLabel
-from src.gui.user_profile_dialog import UserProfileDialog
-from src.gui.gpt_profile_dialog import GPTProfileDialog
+from gui.clickable_label import ClickableLabel
+from gui.user_profile_dialog import UserProfileDialog
+from gui.gpt_profile_dialog import GPTProfileDialog
 
 class VoiceInteractionThread(QThread):
     update_chat = pyqtSignal(str, str)
