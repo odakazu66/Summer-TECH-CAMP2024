@@ -3,4 +3,5 @@ venv/
 conversation.json
 *.wav
 .idea/
+.DS_Store
 
