@@ -258,15 +258,18 @@ class MainWindow(QMainWindow):
         print(str(id) + " icon was clicked")
 
         if ( id == "You"):
-            dialog = UserProfileDialog()
+            dialog = UserProfileDialog(self)
         else:
-            dialog = GPTProfileDialog()
+            dialog = GPTProfileDialog(self)
 
         result = dialog.exec()
         if result:
             print("applied")
         else:
             print("not applied")
+
+    def set_gpt_name(self, name):
+        self.gpt_name = name
 
     def set_user_icon_path(self, path):
         self.user_icon_path = path
