@@ -218,20 +218,6 @@ class MainWindow(QMainWindow):
     def create_bubble(self, sender_id, message):
         return ChatBubble(sender_id, message, self)
 
-    def on_icon_clicked(self, id):
-        print(str(id) + " icon was clicked")
-
-        if id == "You":
-            dialog = UserProfileDialog(self)
-        else:
-            dialog = GPTProfileDialog(self)
-
-        result = dialog.exec()
-        if result:
-            print("applied")
-        else:
-            print("not applied")
-
     def update_chat_names(self, dialog_id, old_name, new_name):
         if dialog_id == "You":
             self.set_user_name(new_name)

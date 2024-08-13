@@ -3,6 +3,8 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFrame, QLabel
 
 from .clickable_label import ClickableLabel
+from .gpt_profile_dialog import GPTProfileDialog
+from .user_profile_dialog import UserProfileDialog
 
 
 class ChatBubble(QHBoxLayout):
@@ -54,9 +56,19 @@ class ChatBubble(QHBoxLayout):
             self.addWidget(sender_icon, alignment=Qt.AlignVCenter)
             self.addWidget(bubble)
 
-
     def on_icon_clicked(self):
-        pass
+        print(f"{self.sender_id}'s icon was clicked")
+
+        if self.sender_id == "You":
+            dialog = UserProfileDialog(parent=self.parent_window)
+        else:
+            dialog = GPTProfileDialog(parent=self.parent_window)
+
+        result = dialog.exec()
+        if result:
+            print("Applied New Settings.")
+        else:
+            print("Discarded New Settings.")
 
     def set_sender(self, new_name):
         pass
