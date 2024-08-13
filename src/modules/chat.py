@@ -17,7 +17,13 @@ default_conversation = {
     "messages": [{"role": "system", "content": "文字制限は20文字以内。あなたは役にたつアシスタントです。"}],
     "temperature": 0.7,
 }
- 
+
+class t_color:
+    RED = '\033[31m'
+    GREEN = '\033[32m'
+    BLUE = '\033[34m'
+    RESET = '\033[0m'
+
 
 # 会話の履歴とパラメータをロード
 def load_conversation(file_path):
@@ -79,7 +85,6 @@ def get_gpt_completion(transcript):
     return response
 
 def main():
-    file_path = "../conversation.json"
     data = load_conversation(file_path)
     messages = data["messages"]
     temperature = data["temperature"]
@@ -117,5 +122,4 @@ def main():
     save_conversation(file_path, data)
 
 if __name__ == "__main__":
-    from terminal_colors import t_color
     main()
