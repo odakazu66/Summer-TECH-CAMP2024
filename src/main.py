@@ -189,10 +189,8 @@ class MainWindow(QMainWindow):
             self.update_chat("GPT", completion)
             self.keyboard_input.clear()
 
-    def update_chat(self, sender, message):
-        # display_name = sender if sender != "GPT" else self.gpt_name
-        display_name = self.user_name if sender == "You" else self.gpt_name
-        self.append_chat_message(display_name, message)
+    def update_chat(self, sender_id, message):
+        self.append_chat_message(sender_id, message)
         self.voice_thread.start_recording()
         self.stop_recording_button.setEnabled(True)
 
@@ -206,8 +204,8 @@ class MainWindow(QMainWindow):
     def update_gpt_name(self, name):
         self.gpt_name = name
 
-    def append_chat_message(self, sender, message):
-        bubble = self.create_bubble(sender, message)
+    def append_chat_message(self, sender_id, message):
+        bubble = self.create_bubble(sender_id, message)
         self.chat_layout.insertLayout(self.chat_layout.count() - 1, bubble)
         self.chat_widget.adjustSize()
 
@@ -217,8 +215,8 @@ class MainWindow(QMainWindow):
         scrollbar = self.scroll_area.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
-    def create_bubble(self, sender, message):
-        return ChatBubble(sender, message, self)
+    def create_bubble(self, sender_id, message):
+        return ChatBubble(sender_id, message, self)
 
     def on_icon_clicked(self, id):
         print(str(id) + " icon was clicked")
