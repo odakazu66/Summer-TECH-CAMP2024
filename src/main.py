@@ -15,6 +15,8 @@ from modules.record import record_audio
 from gui.clickable_label import ClickableLabel
 from gui.user_profile_dialog import UserProfileDialog
 from gui.gpt_profile_dialog import GPTProfileDialog
+from gui.chat_bubble import ChatBubble
+
 
 class VoiceInteractionThread(QThread):
     update_chat = pyqtSignal(str, str)
@@ -216,41 +218,7 @@ class MainWindow(QMainWindow):
         scrollbar.setValue(scrollbar.maximum())
 
     def create_bubble(self, sender, message):
-        bubble = QFrame()
-        bubble.setObjectName("bubble_frame")
-        bubble_container = QHBoxLayout()
-        bubble_layout = QVBoxLayout(bubble)
-        
-        bubble_label = QLabel(message)
-        bubble_label.setWordWrap(True)
-        bubble_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        bubble_label.setCursor(Qt.IBeamCursor)
-        bubble_label.setFont(QFont("メイリオ", 12))
-        bubble_label.setStyleSheet("color: black; background-color: {}; border-radius: 15px; padding: 10px;".format('#E0F7FA' if sender == 'You' else '#E1FFC7'))
-    
-        sender_label = QLabel(sender)
-        sender_label.setFont(QFont("メイリオ", 10, QFont.Bold))
-        sender_label.setStyleSheet("color: gray;")  # 名前の色
-
-        bubble_layout.addWidget(sender_label)
-        bubble_layout.addWidget(bubble_label)
-        bubble_layout.addStretch(1)
-
-        if sender == self.user_name:
-            sender_icon = ClickableLabel(self.user_name, self.user_icon_path)
-            bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
-            bubble_container.addWidget(bubble)
-            bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
-        else:
-            sender_icon = ClickableLabel(self.gpt_name, self.gpt_icon_path)
-            bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
-            bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
-            bubble_container.addWidget(bubble)
-
-        # make icon clickable
-        sender_icon.clicked.connect(self.on_icon_clicked)
-
-        return bubble_container
+        return ChatBubble(sender, message, self)
 
     def on_icon_clicked(self, id):
         print(str(id) + " icon was clicked")
@@ -337,7 +305,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.use_gui == False:
+    if not args.use_gui:
         chat_main()
     else:
         app = QApplication(sys.argv)
