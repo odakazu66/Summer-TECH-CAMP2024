@@ -1,4 +1,5 @@
 import sys
+import argparse
 import threading
 import qtawesome as qta
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget,
@@ -7,6 +8,7 @@ from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QColor, QFont, QPixmap, QCursor
 from modules.transcribe import transcribe_file
 from modules.chat import get_gpt_completion
+from modules.chat import main as chat_main
 from modules.synthesize import synthesize_speech
 from modules.playback import playback
 from modules.record import record_audio
@@ -329,7 +331,16 @@ class MainWindow(QMainWindow):
         self.user_name = name
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    mainWindow = MainWindow()
-    mainWindow.show()
-    sys.exit(app.exec_())
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--use-gui", action="store_true", help="use the gui")
+
+    args = parser.parse_args()
+
+    if args.use_gui == False:
+        chat_main()
+    else:
+        app = QApplication(sys.argv)
+        mainWindow = MainWindow()
+        mainWindow.show()
+        sys.exit(app.exec_())
