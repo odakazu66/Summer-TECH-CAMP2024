@@ -1,6 +1,7 @@
-from PyQt5.QtCore import Qt
+import qtawesome as qta
+from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFrame, QLabel
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFrame, QLabel, QPushButton
 
 from .clickable_label import ClickableLabel
 from .gpt_profile_dialog import GPTProfileDialog
@@ -44,17 +45,46 @@ class ChatBubble(QHBoxLayout):
         bubble_layout.addWidget(bubble_label)
         bubble_layout.addStretch(1)
 
+        # bottom layout to hold play button
+        bottom_layout = QHBoxLayout()
+
+        play_icon = qta.icon("fa5.play-circle")
+        play_button = QPushButton(play_icon, "")
+        play_button.setIconSize(QSize(20, 20))
+        play_button.setStyleSheet("border: none;")
+        play_button.setCursor(Qt.PointingHandCursor)
+
+        play_button.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #B3E5FC;  # Light blue color
+                border: none;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #81D4FA;  # Slightly darker blue on hover
+            }
+            """
+        )
+
         sender_icon = ClickableLabel(self.sender_name, self.icon_path)
         sender_icon.clicked.connect(self.on_icon_clicked)
 
         if self.sender_id == "You":
             bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
+            bottom_layout.addStretch(1)
+            bottom_layout.addWidget(play_button)
+            bubble_layout.addLayout(bottom_layout)
             self.addWidget(bubble)
             self.addWidget(sender_icon, alignment=Qt.AlignVCenter)
         else:
             bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
+            bottom_layout.addWidget(play_button)
+            bottom_layout.addStretch(1)
+            bubble_layout.addLayout(bottom_layout)
             self.addWidget(sender_icon, alignment=Qt.AlignVCenter)
             self.addWidget(bubble)
+
 
     def on_icon_clicked(self):
         print(f"{self.sender_id}'s icon was clicked")
