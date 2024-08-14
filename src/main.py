@@ -37,13 +37,15 @@ class VoiceInteractionThread(QThread):
                 break
             transcript = transcribe_file(wav_path)
             self.update_chat.emit("You", transcript)
-            completion = get_gpt_completion(transcript)
-            self.update_chat.emit("GPT", completion)
 
             now = datetime.now()
             output_filename = now.strftime("../sound/gpt_%Y_%m_%d_%H_%M_%S.wav")
 
+            completion = get_gpt_completion(transcript, user_sound_path=wav_path, gpt_sound_path=output_filename)
+
             synthesize_speech(completion, output_filename, self.voice_name)
+            self.update_chat.emit("GPT", completion)
+
             playback(output_filename)
 
     def start_interaction(self):
