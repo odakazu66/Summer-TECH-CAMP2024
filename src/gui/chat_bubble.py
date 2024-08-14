@@ -9,11 +9,12 @@ from .user_profile_dialog import UserProfileDialog
 
 
 class ChatBubble(QHBoxLayout):
-    def __init__(self, sender_id, message, parent):
+    def __init__(self, sender_id, message, parent, sound_path=None):
         super().__init__()
         self.parent_window = parent
         self.sender_id = sender_id
         self.message = message
+        self.sound_path = sound_path
 
         if self.sender_id == "You":
             self.sender_name = self.parent_window.user_name
@@ -45,45 +46,58 @@ class ChatBubble(QHBoxLayout):
         bubble_layout.addWidget(bubble_label)
         bubble_layout.addStretch(1)
 
-        # bottom layout to hold play button
-        bottom_layout = QHBoxLayout()
+        if self.sound_path is not None:
+            # bottom layout to hold play button
+            bottom_layout = QHBoxLayout()
 
-        play_icon = qta.icon("fa5.play-circle")
-        play_button = QPushButton(play_icon, "")
-        play_button.setIconSize(QSize(20, 20))
-        play_button.setStyleSheet("border: none;")
-        play_button.setCursor(Qt.PointingHandCursor)
+            play_icon = qta.icon("fa5.play-circle")
+            play_button = QPushButton(play_icon, "")
+            play_button.setIconSize(QSize(20, 20))
+            play_button.setStyleSheet("border: none;")
+            play_button.setCursor(Qt.PointingHandCursor)
 
-        play_button.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #B3E5FC;  /* Light blue color */
-                border: none;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #81D4FA;  /* Slightly darker blue on hover */
-            }
-            """
-        )
+            play_button.setStyleSheet(
+                """
+                QPushButton {
+                    background-color: #B3E5FC;  /* Light blue color */
+                    border: none;
+                    border-radius: 5px;
+                }
+                QPushButton:hover {
+                    background-color: #81D4FA;  /* Slightly darker blue on hover */
+                }
+                """
+            )
 
-        sender_icon = ClickableLabel(self.sender_name, self.icon_path)
-        sender_icon.clicked.connect(self.on_icon_clicked)
+            sender_icon = ClickableLabel(self.sender_name, self.icon_path)
+            sender_icon.clicked.connect(self.on_icon_clicked)
 
-        if self.sender_id == "You":
-            bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
-            bottom_layout.addStretch(1)
-            bottom_layout.addWidget(play_button)
-            bubble_layout.addLayout(bottom_layout)
-            self.addWidget(bubble)
-            self.addWidget(sender_icon, alignment=Qt.AlignVCenter)
+            if self.sender_id == "You":
+                bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
+                bottom_layout.addStretch(1)
+                bottom_layout.addWidget(play_button)
+                bubble_layout.addLayout(bottom_layout)
+                self.addWidget(bubble)
+                self.addWidget(sender_icon, alignment=Qt.AlignVCenter)
+            else:
+                bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
+                bottom_layout.addWidget(play_button)
+                bottom_layout.addStretch(1)
+                bubble_layout.addLayout(bottom_layout)
+                self.addWidget(sender_icon, alignment=Qt.AlignVCenter)
+                self.addWidget(bubble)
         else:
-            bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
-            bottom_layout.addWidget(play_button)
-            bottom_layout.addStretch(1)
-            bubble_layout.addLayout(bottom_layout)
-            self.addWidget(sender_icon, alignment=Qt.AlignVCenter)
-            self.addWidget(bubble)
+            sender_icon = ClickableLabel(self.sender_name, self.icon_path)
+            sender_icon.clicked.connect(self.on_icon_clicked)
+
+            if self.sender_id == "You":
+                bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
+                self.addWidget(bubble)
+                self.addWidget(sender_icon, alignment=Qt.AlignVCenter)
+            else:
+                bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
+                self.addWidget(sender_icon, alignment=Qt.AlignVCenter)
+                self.addWidget(bubble)
 
 
     def on_icon_clicked(self):
