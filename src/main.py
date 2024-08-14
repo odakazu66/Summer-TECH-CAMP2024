@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QColor, QFont, QPixmap, QCursor
 from modules.transcribe import transcribe_file
-from modules.chat import get_gpt_completion
+from modules.chat import get_gpt_completion, load_conversation, file_path
 from modules.chat import main as chat_main
 from modules.synthesize import synthesize_speech
 from modules.playback import playback
@@ -62,7 +62,6 @@ class VoiceInteractionThread(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.initUI()
         self.voice_thread = VoiceInteractionThread()
         self.voice_thread.update_chat.connect(self.update_chat)
         self.gpt_name = "GPT"  # Default GPT name
@@ -70,6 +69,8 @@ class MainWindow(QMainWindow):
         self.user_icon_path = "../images/student-icon.png"
         self.gpt_icon_path = "../images/chatgpt-icon.png"
         self.chat_bubbles_list = []
+
+        self.initUI()
 
     def initUI(self):
         self.setWindowTitle("Voice Interaction System")
@@ -160,6 +161,22 @@ class MainWindow(QMainWindow):
         container = QWidget()
         container.setLayout(layout)
         self.setCentralWidget(container)
+
+        # Load Conversation History
+        self.load_conversation_gui()
+
+    def load_conversation_gui(self):
+        messages = load_conversation(file_path)["messages"]
+
+        if (len(messages) - 1) == 0: # subtract 1 because of system prompt
+            print("There is no history, using only system prompt")
+            return
+
+        for message in messages:
+            if message["role"] == "user":
+                self.append_chat_message("You", message["content"])
+            elif message["role"] == "assistant":
+                self.append_chat_message("GPT", message["content"])
 
     def toggle_interaction(self, checked):
         if checked:
