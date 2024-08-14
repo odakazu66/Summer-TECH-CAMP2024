@@ -1,6 +1,7 @@
 import sys
 import argparse
 import threading
+from datetime import datetime
 import qtawesome as qta
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget,
                              QHBoxLayout, QComboBox, QLabel, QLineEdit, QScrollArea, QFrame, QSpacerItem, QSizePolicy, QScrollBar)
@@ -38,8 +39,12 @@ class VoiceInteractionThread(QThread):
             self.update_chat.emit("You", transcript)
             completion = get_gpt_completion(transcript)
             self.update_chat.emit("GPT", completion)
-            synthesize_speech(completion, "output.wav", self.voice_name)
-            playback("output.wav")
+
+            now = datetime.now()
+            output_filename = now.strftime("../sound/gpt_%Y_%m_%d_%H_%M_%S.wav")
+
+            synthesize_speech(completion, output_filename, self.voice_name)
+            playback(output_filename)
 
     def start_interaction(self):
         self.running_event.set()

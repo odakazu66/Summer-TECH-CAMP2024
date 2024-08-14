@@ -57,12 +57,12 @@ class ChatBubble(QHBoxLayout):
         play_button.setStyleSheet(
             """
             QPushButton {
-                background-color: #B3E5FC;  # Light blue color
+                background-color: #B3E5FC;  /* Light blue color */
                 border: none;
                 border-radius: 5px;
             }
             QPushButton:hover {
-                background-color: #81D4FA;  # Slightly darker blue on hover
+                background-color: #81D4FA;  /* Slightly darker blue on hover */
             }
             """
         )

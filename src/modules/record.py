@@ -2,6 +2,7 @@ import pyaudio
 import wave
 import time
 import numpy as np
+from datetime import datetime
 
 # 音声録音パラメータ
 FORMAT = pyaudio.paInt16  # 16ビットの音声フォーマット
@@ -61,7 +62,9 @@ def record_audio(running_event, recording_event):
     audio.terminate()
 
     # 録音したデータをwavファイルとして保存
-    output_filename = "output.wav"
+    now = datetime.now()
+    output_filename = now.strftime("../sound/user_%Y_%m_%d_%H_%M_%S.wav")
+
     with wave.open(output_filename, 'wb') as wf:
         wf.setnchannels(CHANNELS)
         wf.setsampwidth(audio.get_sample_size(FORMAT))
