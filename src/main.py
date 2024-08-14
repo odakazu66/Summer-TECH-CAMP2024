@@ -190,9 +190,15 @@ class MainWindow(QMainWindow):
 
         for message in messages:
             if message["role"] == "user":
-                self.append_chat_message("You", message["content"])
+                if 'sound_path' in message:
+                    self.append_chat_message("You", message["content"], sound_path=message["sound_path"])
+                else:
+                    self.append_chat_message("You", message["content"])
             elif message["role"] == "assistant":
-                self.append_chat_message("GPT", message["content"])
+                if 'sound_path' in message:
+                    self.append_chat_message("GPT", message["content"], sound_path=message["sound_path"])
+                else:
+                    self.append_chat_message("GPT", message["content"])
 
     def toggle_interaction(self, checked):
         if checked:
