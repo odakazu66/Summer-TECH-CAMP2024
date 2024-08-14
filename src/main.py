@@ -20,7 +20,7 @@ from gui.chat_bubble import ChatBubble
 
 
 class VoiceInteractionThread(QThread):
-    update_chat = pyqtSignal(str, str)
+    update_chat = pyqtSignal(dict)
 
     def __init__(self):
         super().__init__()
@@ -36,7 +36,11 @@ class VoiceInteractionThread(QThread):
             if not self.running_event.is_set():
                 break
             transcript = transcribe_file(wav_path)
-            self.update_chat.emit("You", transcript)
+            self.update_chat.emit({
+                'sender_id': "You",
+                "transcript": transcript,
+                "sound_path": wav_path
+            })
 
             now = datetime.now()
             output_filename = now.strftime("../sound/gpt_%Y_%m_%d_%H_%M_%S.wav")
@@ -44,7 +48,12 @@ class VoiceInteractionThread(QThread):
             completion = get_gpt_completion(transcript, user_sound_path=wav_path, gpt_sound_path=output_filename)
 
             synthesize_speech(completion, output_filename, self.voice_name)
-            self.update_chat.emit("GPT", completion)
+
+            self.update_chat.emit({
+                'sender_id': "GPT",
+                "transcript": completion,
+                "sound_path": output_filename
+            })
 
             playback(output_filename)
 
@@ -208,13 +217,25 @@ class MainWindow(QMainWindow):
     def send_keyboard_input(self):
         text = self.keyboard_input.text()
         if text.strip():
-            self.update_chat("You", text)
+            #self.update_chat("You", text)
+            self.update_chat({
+                "sender_id": "You",
+                "transcript": text
+            })
             completion = get_gpt_completion(text)
-            self.update_chat("GPT", completion)
+            #self.update_chat("GPT", completion)
+            self.update_chat({
+                "sender_id": "GPT",
+                "transcript": completion
+            })
             self.keyboard_input.clear()
 
-    def update_chat(self, sender_id, message):
-        self.append_chat_message(sender_id, message)
+    def update_chat(self, data):
+        sender_id = data.get('sender_id')
+        message = data.get('transcript')
+        sound_path = data.get('sound_path')
+
+        self.append_chat_message(sender_id, message, sound_path=sound_path)
         self.voice_thread.start_recording()
         self.stop_recording_button.setEnabled(True)
 
@@ -228,8 +249,8 @@ class MainWindow(QMainWindow):
     def update_gpt_name(self, name):
         self.gpt_name = name
 
-    def append_chat_message(self, sender_id, message):
-        bubble = self.create_bubble(sender_id, message)
+    def append_chat_message(self, sender_id, message, sound_path=None):
+        bubble = self.create_bubble(sender_id, message, sound_path=sound_path)
         self.chat_layout.insertLayout(self.chat_layout.count() - 1, bubble)
         self.chat_widget.adjustSize()
 
@@ -239,8 +260,8 @@ class MainWindow(QMainWindow):
         scrollbar = self.scroll_area.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
-    def create_bubble(self, sender_id, message):
-        return ChatBubble(sender_id, message, self)
+    def create_bubble(self, sender_id, message, sound_path=None):
+        return ChatBubble(sender_id, message, self, sound_path=sound_path)
 
     def update_chat_names(self, dialog_id, old_name, new_name):
         if dialog_id == "You":
