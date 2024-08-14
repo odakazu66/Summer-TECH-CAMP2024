@@ -84,6 +84,14 @@ def get_gpt_completion(transcript):
     save_conversation(file_path, data)
     return response
 
+def print_full_conversation(messages_list):
+    for message in messages_list:
+        if message["role"] == "user":
+            print(f"あなた: {message["content"]}")
+        elif message["role"] == "assistant":
+            print(f"chatGPT: {message["content"]}")
+    print("---------- 以上は会話の歴史 ----------")
+
 def main():
     data = load_conversation(file_path)
     messages = data["messages"]
@@ -95,6 +103,8 @@ def main():
     print(f"会話の記録をリセットするためには {t_color.RED}reset{t_color.RESET} と入力してください")
     print(f"会話の履歴は {t_color.GREEN}conversation.json{t_color.RESET} というファイルに保存される")
     print()
+
+    print_full_conversation(messages)
 
     while True:
         user_input = input("あなた：")
