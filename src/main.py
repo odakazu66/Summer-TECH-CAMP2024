@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QColor, QFont, QPixmap, QCursor
 from modules.transcribe import transcribe_file
-from modules.chat import get_gpt_completion
+from modules.chat import get_gpt_completion, load_conversation, file_path
 from modules.chat import main as chat_main
 from modules.synthesize import synthesize_speech
 from modules.playback import playback
@@ -15,6 +15,8 @@ from modules.record import record_audio
 from gui.clickable_label import ClickableLabel
 from gui.user_profile_dialog import UserProfileDialog
 from gui.gpt_profile_dialog import GPTProfileDialog
+from gui.chat_bubble import ChatBubble
+
 
 class VoiceInteractionThread(QThread):
     update_chat = pyqtSignal(str, str)
@@ -60,7 +62,6 @@ class VoiceInteractionThread(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.initUI()
         self.voice_thread = VoiceInteractionThread()
         self.voice_thread.update_chat.connect(self.update_chat)
         self.gpt_name = "GPT"  # Default GPT name
@@ -68,6 +69,8 @@ class MainWindow(QMainWindow):
         self.user_icon_path = "../images/student-icon.png"
         self.gpt_icon_path = "../images/chatgpt-icon.png"
         self.chat_bubbles_list = []
+
+        self.initUI()
 
     def initUI(self):
         self.setWindowTitle("Voice Interaction System")
@@ -159,6 +162,22 @@ class MainWindow(QMainWindow):
         container.setLayout(layout)
         self.setCentralWidget(container)
 
+        # Load Conversation History
+        self.load_conversation_gui()
+
+    def load_conversation_gui(self):
+        messages = load_conversation(file_path)["messages"]
+
+        if (len(messages) - 1) == 0: # subtract 1 because of system prompt
+            print("There is no history, using only system prompt")
+            return
+
+        for message in messages:
+            if message["role"] == "user":
+                self.append_chat_message("You", message["content"])
+            elif message["role"] == "assistant":
+                self.append_chat_message("GPT", message["content"])
+
     def toggle_interaction(self, checked):
         if checked:
             self.mic_button.setIcon(self.spin_icon)
@@ -187,10 +206,8 @@ class MainWindow(QMainWindow):
             self.update_chat("GPT", completion)
             self.keyboard_input.clear()
 
-    def update_chat(self, sender, message):
-        # display_name = sender if sender != "GPT" else self.gpt_name
-        display_name = self.user_name if sender == "You" else self.gpt_name
-        self.append_chat_message(display_name, message)
+    def update_chat(self, sender_id, message):
+        self.append_chat_message(sender_id, message)
         self.voice_thread.start_recording()
         self.stop_recording_button.setEnabled(True)
 
@@ -204,8 +221,8 @@ class MainWindow(QMainWindow):
     def update_gpt_name(self, name):
         self.gpt_name = name
 
-    def append_chat_message(self, sender, message):
-        bubble = self.create_bubble(sender, message)
+    def append_chat_message(self, sender_id, message):
+        bubble = self.create_bubble(sender_id, message)
         self.chat_layout.insertLayout(self.chat_layout.count() - 1, bubble)
         self.chat_widget.adjustSize()
 
@@ -215,56 +232,8 @@ class MainWindow(QMainWindow):
         scrollbar = self.scroll_area.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
-    def create_bubble(self, sender, message):
-        bubble = QFrame()
-        bubble.setObjectName("bubble_frame")
-        bubble_container = QHBoxLayout()
-        bubble_layout = QVBoxLayout(bubble)
-        
-        bubble_label = QLabel(message)
-        bubble_label.setWordWrap(True)
-        bubble_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        bubble_label.setCursor(Qt.IBeamCursor)
-        bubble_label.setFont(QFont("メイリオ", 12))
-        bubble_label.setStyleSheet("color: black; background-color: {}; border-radius: 15px; padding: 10px;".format('#E0F7FA' if sender == 'You' else '#E1FFC7'))
-    
-        sender_label = QLabel(sender)
-        sender_label.setFont(QFont("メイリオ", 10, QFont.Bold))
-        sender_label.setStyleSheet("color: gray;")  # 名前の色
-
-        bubble_layout.addWidget(sender_label)
-        bubble_layout.addWidget(bubble_label)
-        bubble_layout.addStretch(1)
-
-        if sender == self.user_name:
-            sender_icon = ClickableLabel(self.user_name, self.user_icon_path)
-            bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
-            bubble_container.addWidget(bubble)
-            bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
-        else:
-            sender_icon = ClickableLabel(self.gpt_name, self.gpt_icon_path)
-            bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
-            bubble_container.addWidget(sender_icon, alignment=Qt.AlignVCenter)
-            bubble_container.addWidget(bubble)
-
-        # make icon clickable
-        sender_icon.clicked.connect(self.on_icon_clicked)
-
-        return bubble_container
-
-    def on_icon_clicked(self, id):
-        print(str(id) + " icon was clicked")
-
-        if id == "You":
-            dialog = UserProfileDialog(self)
-        else:
-            dialog = GPTProfileDialog(self)
-
-        result = dialog.exec()
-        if result:
-            print("applied")
-        else:
-            print("not applied")
+    def create_bubble(self, sender_id, message):
+        return ChatBubble(sender_id, message, self)
 
     def update_chat_names(self, dialog_id, old_name, new_name):
         if dialog_id == "You":
@@ -337,7 +306,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.use_gui == False:
+    if not args.use_gui:
         chat_main()
     else:
         app = QApplication(sys.argv)
