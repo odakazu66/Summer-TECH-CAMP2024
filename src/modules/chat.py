@@ -43,9 +43,11 @@ def reset_conversation(file_path):
     return default_conversation["messages"], default_conversation["temperature"]
 
 def chat_with_gpt(messages, model="gpt-3.5-turbo", temperature=0.7):
+    messages_to_send = prepare_for_api(messages)
+
     response = client.chat.completions.create(
         model=model,
-        messages=messages,
+        messages=messages_to_send,
         temperature=temperature
     )
 
@@ -53,8 +55,15 @@ def chat_with_gpt(messages, model="gpt-3.5-turbo", temperature=0.7):
     print("chatGPT: ", response_content)
     return response_content
 
+def prepare_for_api(messages_list_with_sound):
+    cleaned_messages = []
+    for message in messages_list_with_sound:
+        cleaned_message = {key: value for key, value in message.items() if key != 'sound_path'}
+        cleaned_messages.append(cleaned_message)
+    return cleaned_messages
+
 # to implement
-def get_gpt_completion(transcript):
+def get_gpt_completion(transcript, user_sound_path=None, gpt_sound_path=None):
     """
     main()関数の代わりになる。外部と一緒に最も使われるインターフェース。
     音声認識が終わって、この関数が呼ばれると、以下の流れが行われる。
@@ -69,7 +78,7 @@ def get_gpt_completion(transcript):
     temperature = data["temperature"]
     response = ""
 
-    messages.append({"role": "user", "content": transcript})
+    messages.append({"role": "user", "content": transcript, "sound_path": user_sound_path})
 
     try:
         response = chat_with_gpt(messages, temperature=temperature)
@@ -77,7 +86,7 @@ def get_gpt_completion(transcript):
         print(f"Error: {e}")
         exit(1)
 
-    messages.append({"role": "assistant", "content": response})
+    messages.append({"role": "assistant", "content": response, "sound_path": gpt_sound_path})
     
     # 会話を保存
     data["messages"] = messages
