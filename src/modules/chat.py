@@ -25,11 +25,50 @@ class t_color:
     RESET = '\033[0m'
 
 
+# 会話ファイルの形式を確認
+def check_conversation_json_validity(data):
+    # Check if 'messages' is a list
+    if not isinstance(data.get('messages'), list):
+        return False
+
+    for message in data['messages']:
+        # Each message should be a dictionary
+        if not isinstance(message, dict):
+            return False
+
+        # Each message should have 'role' and 'content'
+        if 'role' not in message or 'content' not in message:
+            return False
+
+        if not isinstance(message['role'], str) or not isinstance(message['content'], str):
+            return False
+
+        # 'role' should be one of the allowed values
+        if message['role'] not in {'system', 'user', 'assistant'}:
+            return False
+
+        # Optional 'sound_path' should be a string if present
+        if 'sound_path' in message and not isinstance(message['sound_path'], str):
+            return False
+
+    # 'temperature' should be a float, if present
+    if 'temperature' in data and not isinstance(data['temperature'], float):
+        return False
+
+    return True
+
 # 会話の履歴とパラメータをロード
 def load_conversation(file_path):
     if os.path.exists(file_path):
         with open(file_path, 'r', encoding="utf-8") as file:
-            return json.load(file)
+            content = file.read().strip()  # Read and strip whitespace
+            if content:  # Check if there's any content left after stripping
+                try:
+                    data = json.loads(content)
+                    if check_conversation_json_validity(data):
+                        return data
+                except json.JSONDecodeError:
+                    pass
     return default_conversation
 
 # 会話の履歴とパラメータを保存
