@@ -34,7 +34,15 @@ class GPTProfileDialog(QDialog):
         self.setLayout(layout)
 
     def browse_file(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Select File")
+        options = QFileDialog.Options()
+        image_filter = "Image Files (*.png *.jpg *.jpeg *.bmp);;All Files (*)"
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select an Image",
+            "",
+            image_filter,
+            options=options
+        )
         if file_path:
             self.path_input.setText(file_path)
         print("new image path", self.path_input.text())
