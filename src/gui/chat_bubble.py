@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFrame, QLabel, QPushButto
 from .clickable_label import ClickableLabel
 from .gpt_profile_dialog import GPTProfileDialog
 from .user_profile_dialog import UserProfileDialog
+from modules.playback import PlaybackThread
 
 
 class ChatBubble(QHBoxLayout):
@@ -51,12 +52,12 @@ class ChatBubble(QHBoxLayout):
             bottom_layout = QHBoxLayout()
 
             play_icon = qta.icon("fa5.play-circle")
-            play_button = QPushButton(play_icon, "")
-            play_button.setIconSize(QSize(20, 20))
-            play_button.setStyleSheet("border: none;")
-            play_button.setCursor(Qt.PointingHandCursor)
+            self.play_button = QPushButton(play_icon, "")
+            self.play_button.setIconSize(QSize(20, 20))
+            self.play_button.setStyleSheet("border: none;")
+            self.play_button.setCursor(Qt.PointingHandCursor)
 
-            play_button.setStyleSheet(
+            self.play_button.setStyleSheet(
                 """
                 QPushButton {
                     background-color: #B3E5FC;  /* Light blue color */
@@ -68,6 +69,8 @@ class ChatBubble(QHBoxLayout):
                 }
                 """
             )
+            self.playback_thread = None
+            self.play_button.clicked.connect(self.play_or_stop)
 
             sender_icon = ClickableLabel(self.sender_name, self.icon_path)
             sender_icon.clicked.connect(self.on_icon_clicked)
@@ -75,13 +78,13 @@ class ChatBubble(QHBoxLayout):
             if self.sender_id == "You":
                 bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
                 bottom_layout.addStretch(1)
-                bottom_layout.addWidget(play_button)
+                bottom_layout.addWidget(self.play_button)
                 bubble_layout.addLayout(bottom_layout)
                 self.addWidget(bubble)
                 self.addWidget(sender_icon, alignment=Qt.AlignVCenter)
             else:
                 bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
-                bottom_layout.addWidget(play_button)
+                bottom_layout.addWidget(self.play_button)
                 bottom_layout.addStretch(1)
                 bubble_layout.addLayout(bottom_layout)
                 self.addWidget(sender_icon, alignment=Qt.AlignVCenter)
@@ -113,6 +116,28 @@ class ChatBubble(QHBoxLayout):
             print("Applied New Settings.")
         else:
             print("Discarded New Settings.")
+
+    def play_or_stop(self):
+        if self.playback_thread is None:  # Play
+            filename = self.sound_path  # Replace with your file
+            self.playback_thread = PlaybackThread(filename)
+            self.playback_thread.finished.connect(self.on_playback_finished)
+            self.playback_thread.start()
+
+            pause_icon = qta.icon("fa5.pause-circle")
+            self.play_button.setIcon(pause_icon)
+        else:  # Stop
+            self.playback_thread.stop_playback()
+            self.playback_thread.wait()  # Ensure the thread stops before resetting
+            self.playback_thread = None
+
+            play_icon = qta.icon("fa5.play-circle")
+            self.play_button.setIcon(play_icon)
+
+    def on_playback_finished(self):
+        self.playback_thread = None
+        play_icon = qta.icon("fa5.play-circle")
+        self.play_button.setIcon(play_icon)
 
     def set_sender(self, new_name):
         pass
