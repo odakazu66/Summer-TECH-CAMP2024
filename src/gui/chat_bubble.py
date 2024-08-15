@@ -124,8 +124,8 @@ class ChatBubble(QHBoxLayout):
             self.playback_thread.finished.connect(self.on_playback_finished)
             self.playback_thread.start()
 
-            pause_icon = qta.icon("fa5.pause-circle")
-            self.play_button.setIcon(pause_icon)
+            stop_icon = qta.icon("fa5.stop-circle")
+            self.play_button.setIcon(stop_icon)
         else:  # Stop
             self.playback_thread.stop_playback()
             self.playback_thread.wait()  # Ensure the thread stops before resetting
