@@ -135,9 +135,9 @@ def get_gpt_completion(transcript, user_sound_path=None, gpt_sound_path=None):
 def print_full_conversation(messages_list):
     for message in messages_list:
         if message["role"] == "user":
-            print(f"あなた: {message["content"]}")
+            print(f"あなた: {message['content']}")
         elif message["role"] == "assistant":
-            print(f"chatGPT: {message["content"]}")
+            print(f"chatGPT: {message['content']}")
     print("---------- 以上は会話の歴史 ----------")
 
 def main():

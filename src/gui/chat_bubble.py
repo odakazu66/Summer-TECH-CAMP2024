@@ -44,7 +44,7 @@ class ChatBubble(QHBoxLayout):
         bubble_label.setStyleSheet("""color: black; 
         background-color: {}; 
         border-radius: 15px; 
-        padding: 10px;""".format('#E0F7FA' if self.sender_id == "You" else '#E1FFC7'))
+        padding: 10px;""".format('#E1FFC7' if self.sender_id == "You" else '#E0F7FA'))
 
         bubble_layout.addWidget(sender_label)
         if self.sender_id == "You":
