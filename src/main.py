@@ -127,15 +127,6 @@ class MainWindow(QMainWindow):
         self.stop_recording_button.clicked.connect(self.stop_recording)
         self.stop_recording_button.setEnabled(False)
 
-        self.voice_selection = QComboBox()
-        self.voice_selection.addItems(["ja-JP-Standard-A", "ja-JP-Standard-B", "ja-JP-Standard-C", "ja-JP-Standard-D"])
-        self.voice_selection.setFont(font)
-        self.voice_selection.setStyleSheet('QComboBox {background-color: #C0C0C0; \
-                                                  height: 20px; \
-                                                  border: 1px solid black;\
-                                                  border-radius: 5px;} ')
-        self.voice_selection.currentTextChanged.connect(self.update_voice_selection)
-
         self.gpt_name_input = QLineEdit()
         self.gpt_name_input.setPlaceholderText("Enter GPT Name")
         self.gpt_name_input.setFont(font)
@@ -169,7 +160,6 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(self.stop_recording_button)
 
         layout.addWidget(self.scroll_area)
-        layout.addWidget(self.voice_selection)
         layout.addWidget(self.gpt_name_input)
         layout.addWidget(self.keyboard_input)
         layout.addLayout(button_layout)

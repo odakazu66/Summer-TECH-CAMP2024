@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QLineEdit, QPushButton, QFileDialog
+from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QLineEdit, QPushButton, QFileDialog, \
+    QComboBox
 
 
 class GPTProfileDialog(QDialog):
@@ -19,6 +20,15 @@ class GPTProfileDialog(QDialog):
         self.browse_button = QPushButton("Browse...", self)
         self.browse_button.clicked.connect(self.browse_file)
 
+        # 音声選択部分
+        self.voice_selection = QComboBox()
+        self.voice_selection.addItems(["ja-JP-Standard-A", "ja-JP-Standard-B", "ja-JP-Standard-C", "ja-JP-Standard-D"])
+        self.voice_selection.setStyleSheet('QComboBox {background-color: #C0C0C0; \
+                                                  height: 20px; \
+                                                  border: 1px solid black;\
+                                                  border-radius: 5px;} ')
+        self.voice_selection.setCurrentText(self.parent.voice_thread.voice_name)
+
         q_buttons = QDialogButtonBox.Apply | QDialogButtonBox.Discard
         self.button_box = QDialogButtonBox(q_buttons)
 
@@ -30,6 +40,7 @@ class GPTProfileDialog(QDialog):
         layout.addWidget(self.name_label_entry)
         layout.addWidget(self.path_input)
         layout.addWidget(self.browse_button)
+        layout.addWidget(self.voice_selection)
         layout.addWidget(self.button_box)
         self.setLayout(layout)
 
@@ -55,6 +66,9 @@ class GPTProfileDialog(QDialog):
 
         if self.path_input.text() != "":
             self.parent.update_user_icons(self.id, self.path_input.text())
+
+        # 音声の設定
+        self.parent.update_voice_selection(self.voice_selection.currentText())
 
         self.accept()  # Close the dialog with an accept result
 
