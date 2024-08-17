@@ -93,9 +93,8 @@ class MainWindow(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle("Voice Interaction System")
-        self.resize(800, 600)  # Set the window size to 800x600
-        font = QFont()
-        font.setFamily("メイリオ")
+        self.resize(1080, 800)  # Set the window size to 800x600
+        font = QFont("メイリオ", 12)
 
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
@@ -146,6 +145,11 @@ class MainWindow(QMainWindow):
         self.keyboard_input.setFont(font)
         self.keyboard_input.returnPressed.connect(self.send_keyboard_input)
         self.keyboard_input.setVisible(False)
+        self.keyboard_input.setStyleSheet("""
+            QLineEdit {
+                margin: 2px;
+            } 
+        """)
 
         layout = QVBoxLayout()
         button_layout = QHBoxLayout()
@@ -191,8 +195,8 @@ class MainWindow(QMainWindow):
         self.scroll_area.setStyleSheet(f"""
             QScrollArea {{
                 background-image: url({bg_path});
-                /* background-repeat: repeat; */
-                background-position: top left;
+                background-repeat: no-repeat;
+                background-position: center;
                 background-attachment: fixed;
             }}
         """)
