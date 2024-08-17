@@ -2,9 +2,12 @@ import sys
 import argparse
 import threading
 from datetime import datetime
+from multiprocessing.managers import convert_to_error
+
 import qtawesome as qta
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget,
-                             QHBoxLayout, QComboBox, QLabel, QLineEdit, QScrollArea, QFrame, QSpacerItem, QSizePolicy, QScrollBar)
+                             QHBoxLayout, QComboBox, QLabel, QLineEdit, QScrollArea, QFrame, QSpacerItem, QSizePolicy,
+                             QScrollBar, QMenu, QFileDialog)
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QColor, QFont, QPixmap, QCursor
 from modules.transcribe import transcribe_file
@@ -96,7 +99,7 @@ class MainWindow(QMainWindow):
 
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
-        
+
         self.chat_widget = QWidget()
         self.chat_layout = QVBoxLayout(self.chat_widget)
         self.chat_layout.addStretch(1)
@@ -160,6 +163,39 @@ class MainWindow(QMainWindow):
 
         # Load Conversation History
         self.load_conversation_gui()
+
+    def contextMenuEvent(self, event):
+        context_menu = QMenu(self)
+        change_background_action = context_menu.addAction("Change Background")
+        change_background_action.triggered.connect(self.launch_background_dialog)
+
+        context_menu.exec_(self.mapToGlobal(event.pos()))
+
+    def launch_background_dialog(self):
+        options = QFileDialog.Options()
+        image_filter = "Image Files (*.png *.jpg *.jpeg *.bmp);;All Files (*)"
+        new_bg_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select an Image",
+            "",
+            image_filter,
+            options=options
+        )
+        if new_bg_path:
+            print("new background path", new_bg_path)
+            self.set_scroll_bg(new_bg_path)
+
+    def set_scroll_bg(self, bg_path):
+        self.chat_widget.setStyleSheet("background-color: rgba(0, 0, 0, 0);")
+
+        self.scroll_area.setStyleSheet(f"""
+            QScrollArea {{
+                background-image: url({bg_path});
+                /* background-repeat: repeat; */
+                background-position: top left;
+                background-attachment: fixed;
+            }}
+        """)
 
     def load_conversation_gui(self):
         messages = load_conversation(file_path)["messages"]
