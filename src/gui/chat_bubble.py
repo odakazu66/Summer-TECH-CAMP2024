@@ -44,6 +44,11 @@ class ChatBubble(QHBoxLayout):
         bubble_label.setStyleSheet("color: black; background-color: {}; border-radius: 15px; padding: 10px;".format('#E0F7FA' if self.sender_id == "You" else '#E1FFC7'))
 
         bubble_layout.addWidget(sender_label)
+        if self.sender_id == "You":
+            bubble_layout.setAlignment(sender_label, Qt.AlignRight)
+        else:
+            bubble_layout.setAlignment(sender_label, Qt.AlignLeft)
+
         bubble_layout.addWidget(bubble_label)
         bubble_layout.addStretch(1)
 
