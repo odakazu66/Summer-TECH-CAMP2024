@@ -16,6 +16,7 @@ from modules.chat import main as chat_main
 from modules.synthesize import synthesize_speech
 from modules.playback import playback
 from modules.record import record_audio
+from modules.utils import load_stylesheet
 from gui.clickable_label import ClickableLabel
 from gui.user_profile_dialog import UserProfileDialog
 from gui.gpt_profile_dialog import GPTProfileDialog
@@ -105,6 +106,7 @@ class MainWindow(QMainWindow):
         self.chat_layout.addStretch(1)
         
         self.scroll_area.setWidget(self.chat_widget)
+        self.scroll_area.setStyleSheet(load_stylesheet("styles/scrollarea_styles.qss"))
 
         self.mic_icon = qta.icon('fa5s.microphone')
         self.mic_button = QPushButton(self.mic_icon, "")
