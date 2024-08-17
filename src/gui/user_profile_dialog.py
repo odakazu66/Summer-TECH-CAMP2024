@@ -38,8 +38,9 @@ class UserProfileDialog(QDialog):
         self.setLayout(layout)
 
     def set_icon_in_dialog(self, icon_path):
-        self.icon_selection.setIcon(QIcon(icon_path))
-        self.icon_selection.setIconSize(QSize(50, 50))
+        if icon_path != "":
+            self.icon_selection.setIcon(QIcon(icon_path))
+            self.icon_selection.setIconSize(QSize(50, 50))
 
     def select_icon_dialog(self):
         options = QFileDialog.Options()
