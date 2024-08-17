@@ -41,7 +41,10 @@ class ChatBubble(QHBoxLayout):
         bubble_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         bubble_label.setCursor(Qt.IBeamCursor)
         bubble_label.setFont(QFont("メイリオ", 12))
-        bubble_label.setStyleSheet("color: black; background-color: {}; border-radius: 15px; padding: 10px;".format('#E1FFC7' if self.sender_id == "You" else '#E0F7FA'))
+        bubble_label.setStyleSheet("""color: black; 
+        background-color: {}; 
+        border-radius: 15px; 
+        padding: 10px;""".format('#E1FFC7' if self.sender_id == "You" else '#E0F7FA'))
 
         bubble_layout.addWidget(sender_label)
         if self.sender_id == "You":
@@ -81,14 +84,14 @@ class ChatBubble(QHBoxLayout):
             sender_icon.clicked.connect(self.on_icon_clicked)
 
             if self.sender_id == "You":
-                bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
+                bubble.setStyleSheet("QFrame { padding: 0px 0px 0px 100px;}")
                 bottom_layout.addStretch(1)
                 bottom_layout.addWidget(self.play_button)
                 bubble_layout.addLayout(bottom_layout)
                 self.addWidget(bubble)
                 self.addWidget(sender_icon, alignment=Qt.AlignVCenter)
             else:
-                bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
+                bubble.setStyleSheet("QFrame { padding: 0px 100px 0px 0px;}")
                 bottom_layout.addWidget(self.play_button)
                 bottom_layout.addStretch(1)
                 bubble_layout.addLayout(bottom_layout)
@@ -99,11 +102,11 @@ class ChatBubble(QHBoxLayout):
             sender_icon.clicked.connect(self.on_icon_clicked)
 
             if self.sender_id == "You":
-                bubble.setStyleSheet("margin: 0px 0px 0px 100px;")
+                bubble.setStyleSheet("QFrame { padding: 0px 0px 0px 100px; }")
                 self.addWidget(bubble)
                 self.addWidget(sender_icon, alignment=Qt.AlignVCenter)
             else:
-                bubble.setStyleSheet("margin: 0px 100px 0px 0px;")
+                bubble.setStyleSheet("QFrame { padding: 0px 100px 0px 0px; }")
                 self.addWidget(sender_icon, alignment=Qt.AlignVCenter)
                 self.addWidget(bubble)
 
