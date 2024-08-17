@@ -20,6 +20,7 @@ from gui.clickable_label import ClickableLabel
 from gui.user_profile_dialog import UserProfileDialog
 from gui.gpt_profile_dialog import GPTProfileDialog
 from gui.chat_bubble import ChatBubble
+from gui.scrollarea_with_background import ScrollareaWithBackground
 
 
 class VoiceInteractionThread(QThread):
@@ -96,7 +97,7 @@ class MainWindow(QMainWindow):
         self.resize(1080, 800)  # Set the window size to 800x600
         font = QFont("メイリオ", 12)
 
-        self.scroll_area = QScrollArea()
+        self.scroll_area = ScrollareaWithBackground()
         self.scroll_area.setWidgetResizable(True)
 
         self.chat_widget = QWidget()
@@ -192,14 +193,7 @@ class MainWindow(QMainWindow):
     def set_scroll_bg(self, bg_path):
         self.chat_widget.setStyleSheet("background-color: rgba(0, 0, 0, 0);")
 
-        self.scroll_area.setStyleSheet(f"""
-            QScrollArea {{
-                background-image: url({bg_path});
-                background-repeat: no-repeat;
-                background-position: center;
-                background-attachment: fixed;
-            }}
-        """)
+        self.scroll_area.setBackgroundImage(bg_path)
 
     def load_conversation_gui(self):
         messages = load_conversation(file_path)["messages"]
