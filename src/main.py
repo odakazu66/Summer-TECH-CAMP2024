@@ -127,15 +127,6 @@ class MainWindow(QMainWindow):
         self.stop_recording_button.clicked.connect(self.stop_recording)
         self.stop_recording_button.setEnabled(False)
 
-        self.gpt_name_input = QLineEdit()
-        self.gpt_name_input.setPlaceholderText("Enter GPT Name")
-        self.gpt_name_input.setFont(font)
-        self.gpt_name_input.setStyleSheet('QLineEdit {background-color: #C0C0C0; \
-                                                  height: 20px; \
-                                                  border: 1px solid black;\
-                                                  border-radius: 5px;} ')
-        self.gpt_name_input.textChanged.connect(self.update_gpt_name)
-
         # Add Keyboard Input
         keyboard_icon = qta.icon('fa5s.keyboard')
         self.keyboard_button = QPushButton(keyboard_icon, "")
@@ -160,7 +151,6 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(self.stop_recording_button)
 
         layout.addWidget(self.scroll_area)
-        layout.addWidget(self.gpt_name_input)
         layout.addWidget(self.keyboard_input)
         layout.addLayout(button_layout)
 
