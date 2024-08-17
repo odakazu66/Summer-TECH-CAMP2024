@@ -48,7 +48,7 @@ def check_conversation_json_validity(data):
             return False
 
         # Optional 'sound_path' should be a string if present
-        if 'sound_path' in message and not isinstance(message['sound_path'], str):
+        if 'sound_path' in message and message['sound_path'] is not None and not isinstance(message['sound_path'], str):
             return False
 
     # 'temperature' should be a float, if present
