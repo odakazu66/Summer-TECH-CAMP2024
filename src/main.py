@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QColor, QFont, QPixmap, QCursor
 from modules.transcribe import transcribe_file
-from modules.chat import get_gpt_completion, load_conversation, file_path
+from modules.chat import get_gpt_completion, load_conversation, file_path, save_conversation
 from modules.chat import main as chat_main
 from modules.synthesize import synthesize_speech
 from modules.playback import playback
@@ -198,7 +198,9 @@ class MainWindow(QMainWindow):
         self.scroll_area.setBackgroundImage(bg_path)
 
     def load_conversation_gui(self):
-        messages = load_conversation(file_path)["messages"]
+        data = load_conversation(file_path)
+        messages = data["messages"]
+        save_conversation(file_path, data)
 
         if (len(messages) - 1) == 0: # subtract 1 because of system prompt
             print("There is no history, using only system prompt")
