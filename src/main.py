@@ -16,10 +16,12 @@ from modules.chat import main as chat_main
 from modules.synthesize import synthesize_speech
 from modules.playback import playback
 from modules.record import record_audio
+from modules.utils import load_stylesheet
 from gui.clickable_label import ClickableLabel
 from gui.user_profile_dialog import UserProfileDialog
 from gui.gpt_profile_dialog import GPTProfileDialog
 from gui.chat_bubble import ChatBubble
+from gui.scrollarea_with_background import ScrollareaWithBackground
 
 
 class VoiceInteractionThread(QThread):
@@ -93,11 +95,10 @@ class MainWindow(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle("Voice Interaction System")
-        self.resize(800, 600)  # Set the window size to 800x600
-        font = QFont()
-        font.setFamily("メイリオ")
+        self.resize(1080, 800)  # Set the window size to 800x600
+        font = QFont("メイリオ", 12)
 
-        self.scroll_area = QScrollArea()
+        self.scroll_area = ScrollareaWithBackground()
         self.scroll_area.setWidgetResizable(True)
 
         self.chat_widget = QWidget()
@@ -105,6 +106,7 @@ class MainWindow(QMainWindow):
         self.chat_layout.addStretch(1)
         
         self.scroll_area.setWidget(self.chat_widget)
+        self.scroll_area.setStyleSheet(load_stylesheet("styles/scrollarea_styles.qss"))
 
         self.mic_icon = qta.icon('fa5s.microphone')
         self.mic_button = QPushButton(self.mic_icon, "")
@@ -146,6 +148,11 @@ class MainWindow(QMainWindow):
         self.keyboard_input.setFont(font)
         self.keyboard_input.returnPressed.connect(self.send_keyboard_input)
         self.keyboard_input.setVisible(False)
+        self.keyboard_input.setStyleSheet("""
+            QLineEdit {
+                margin: 2px;
+            } 
+        """)
 
         layout = QVBoxLayout()
         button_layout = QHBoxLayout()
@@ -188,14 +195,7 @@ class MainWindow(QMainWindow):
     def set_scroll_bg(self, bg_path):
         self.chat_widget.setStyleSheet("background-color: rgba(0, 0, 0, 0);")
 
-        self.scroll_area.setStyleSheet(f"""
-            QScrollArea {{
-                background-image: url({bg_path});
-                /* background-repeat: repeat; */
-                background-position: top left;
-                background-attachment: fixed;
-            }}
-        """)
+        self.scroll_area.setBackgroundImage(bg_path)
 
     def load_conversation_gui(self):
         messages = load_conversation(file_path)["messages"]
