@@ -142,6 +142,7 @@ def print_full_conversation(messages_list):
 
 def main():
     data = load_conversation(file_path)
+    save_conversation(file_path, data)
     messages = data["messages"]
     temperature = data["temperature"]
 
