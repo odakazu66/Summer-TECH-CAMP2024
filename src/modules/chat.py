@@ -174,11 +174,12 @@ def main():
         try:
             response = chat_with_gpt(messages, temperature=temperature)
             messages.append({"role": "assistant", "content": response})
+            data["messages"] = messages
+            save_conversation(file_path, data)
         except Exception as e:
             print(f"Error: {e}")
 
-    data["messages"] = messages
-    save_conversation(file_path, data)
+
 
 if __name__ == "__main__":
     main()
