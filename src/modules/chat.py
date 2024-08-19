@@ -138,7 +138,7 @@ def print_full_conversation(messages_list):
             print(f"あなた: {message['content']}")
         elif message["role"] == "assistant":
             print(f"chatGPT: {message['content']}")
-    print("---------- 以上は会話の歴史 ----------")
+    print("---------- 以上は会話の履歴 ----------")
 
 def main():
     data = load_conversation(file_path)
