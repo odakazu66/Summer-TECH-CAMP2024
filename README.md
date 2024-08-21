@@ -10,13 +10,13 @@
 
 ## システム概要
 このシステムは以下のAPIの３つを使用している。
-- OpenAI
+- OpenAI API
 - Google Cloud API
    - Text to Speech
    - Speech to Text
 
  **○環境**
-使用したライブラリーは以下また`requirements.txt`の中に示している。
+使用したライブラリーは以下、または`requirements.txt`の中に示している。
 
 | ライブラリー  | バージョン |
 | --------------------- | ---------- |
