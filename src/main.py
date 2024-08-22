@@ -192,13 +192,40 @@ class MainWindow(QMainWindow):
         return settings
 
     def save_settings(self):
-        pass
+        changed_settings = {
+            "gpt_name": self.gpt_name,  # Default GPT name
+            "user_name": self.user_name,
+            "user_icon_path": self.user_icon_path,
+            "gpt_icon_path": self.gpt_icon_path,
+            "voice_name": self.voice_thread.voice_name
+        }
+        with open(self.settings_path, 'w', encoding="utf-8") as f:
+            json.dump(changed_settings, f, ensure_ascii=False, indent=2)
 
+    def reset_settings(self):
+        default_settings = {
+            "gpt_name": "GPT",  # Default GPT name
+            "user_name": "You",
+            "user_icon_path": "../images/student-icon.png",
+            "gpt_icon_path": "../images/chatgpt-icon.png",
+            "voice_name": "ja-JP-Standard-A"
+        }
+        self.update_chat_names("GPT", self.gpt_name, default_settings["gpt_name"])
+        self.update_chat_names("You", self.user_name, default_settings["user_name"])
+        self.update_user_icons("GPT", default_settings["gpt_icon_path"])
+        self.update_user_icons("You", default_settings["user_icon_path"])
+        self.voice_thread.set_voice(default_settings["voice_name"])
+
+        with open(self.settings_path, 'w', encoding="utf-8") as f:
+            json.dump(default_settings, f, ensure_ascii=False, indent=2)
 
     def contextMenuEvent(self, event):
         context_menu = QMenu(self)
         change_background_action = context_menu.addAction("Change Background")
         change_background_action.triggered.connect(self.launch_background_dialog)
+
+        reset_settings = context_menu.addAction("Reset Settings")
+        reset_settings.triggered.connect(self.reset_settings)
 
         context_menu.exec_(self.mapToGlobal(event.pos()))
 

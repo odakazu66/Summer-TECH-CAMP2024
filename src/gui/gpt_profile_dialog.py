@@ -80,6 +80,7 @@ class GPTProfileDialog(QDialog):
         # 音声の設定
         self.parent.update_voice_selection(self.voice_selection.currentText())
 
+        self.parent.save_settings()
         self.accept()  # Close the dialog with an accept result
 
     def discard(self):

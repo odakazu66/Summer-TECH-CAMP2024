@@ -66,6 +66,7 @@ class UserProfileDialog(QDialog):
         if self.new_icon_path != "":
             self.parent.update_user_icons(self.id, self.new_icon_path)
 
+        self.parent.save_settings()
         self.accept()  # Close the dialog with an accept result
 
     def discard(self):
