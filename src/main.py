@@ -94,6 +94,7 @@ class MainWindow(QMainWindow):
         self.user_name = self.loaded_settings["user_name"]
         self.user_icon_path = self.loaded_settings["user_icon_path"]
         self.gpt_icon_path = self.loaded_settings["gpt_icon_path"]
+        self.bg_path = self.loaded_settings["bg_path"]
         self.voice_thread.set_voice(self.loaded_settings["voice_name"])
 
         self.initUI()
@@ -106,12 +107,16 @@ class MainWindow(QMainWindow):
         self.scroll_area = ScrollareaWithBackground()
         self.scroll_area.setWidgetResizable(True)
 
+
         self.chat_widget = QWidget()
         self.chat_layout = QVBoxLayout(self.chat_widget)
         self.chat_layout.addStretch(1)
 
         self.scroll_area.setWidget(self.chat_widget)
         self.scroll_area.setStyleSheet(load_stylesheet("styles/scrollarea_styles.qss"))
+
+        if self.bg_path is not None:
+            self.set_scroll_bg(self.bg_path)
 
         self.mic_icon = qta.icon('fa5s.microphone')
         self.mic_button = QPushButton(self.mic_icon, "")
@@ -186,7 +191,8 @@ class MainWindow(QMainWindow):
                 "user_name": "You",
                 "user_icon_path": "../images/student-icon.png",
                 "gpt_icon_path": "../images/chatgpt-icon.png",
-                "voice_name": "ja-JP-Standard-A"
+                "voice_name": "ja-JP-Standard-A",
+                "bg_path": None
             }
 
         return settings
@@ -197,10 +203,16 @@ class MainWindow(QMainWindow):
             "user_name": self.user_name,
             "user_icon_path": self.user_icon_path,
             "gpt_icon_path": self.gpt_icon_path,
-            "voice_name": self.voice_thread.voice_name
+            "voice_name": self.voice_thread.voice_name,
+            "bg_path": self.bg_path
         }
         with open(self.settings_path, 'w', encoding="utf-8") as f:
             json.dump(changed_settings, f, ensure_ascii=False, indent=2)
+
+    def remove_background(self):
+        if self.bg_path is not None:
+            self.scroll_area.clearBackgroundImage()
+            self.bg_path = None
 
     def reset_settings(self):
         default_settings = {
@@ -208,13 +220,15 @@ class MainWindow(QMainWindow):
             "user_name": "You",
             "user_icon_path": "../images/student-icon.png",
             "gpt_icon_path": "../images/chatgpt-icon.png",
-            "voice_name": "ja-JP-Standard-A"
+            "voice_name": "ja-JP-Standard-A",
+            "bg_path": None
         }
         self.update_chat_names("GPT", self.gpt_name, default_settings["gpt_name"])
         self.update_chat_names("You", self.user_name, default_settings["user_name"])
         self.update_user_icons("GPT", default_settings["gpt_icon_path"])
         self.update_user_icons("You", default_settings["user_icon_path"])
         self.voice_thread.set_voice(default_settings["voice_name"])
+        self.remove_background()
 
         with open(self.settings_path, 'w', encoding="utf-8") as f:
             json.dump(default_settings, f, ensure_ascii=False, indent=2)
@@ -241,7 +255,9 @@ class MainWindow(QMainWindow):
         )
         if new_bg_path:
             print("new background path", new_bg_path)
+            self.bg_path = new_bg_path
             self.set_scroll_bg(new_bg_path)
+            self.save_settings()
 
     def set_scroll_bg(self, bg_path):
         self.chat_widget.setStyleSheet("background-color: rgba(0, 0, 0, 0);")
