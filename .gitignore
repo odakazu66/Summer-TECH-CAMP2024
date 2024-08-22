@@ -1,6 +1,7 @@
 __pycache__/
 venv/
 conversation.json
+settings.json
 *.wav
 .idea/
 .DS_Store
