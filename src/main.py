@@ -89,12 +89,12 @@ class MainWindow(QMainWindow):
         self.voice_thread = VoiceInteractionThread()
         self.voice_thread.update_chat.connect(self.update_chat)
         self.settings_path = "./settings.json"
-        loaded_settings = self.load_settings()
-        self.gpt_name = loaded_settings["gpt_name"]
-        self.user_name = loaded_settings["user_name"]
-        self.user_icon_path = loaded_settings["user_icon_path"]
-        self.gpt_icon_path = loaded_settings["gpt_icon_path"]
-        self.voice_thread.set_voice(loaded_settings["voice_name"])
+        self.loaded_settings = self.load_settings()
+        self.gpt_name = self.loaded_settings["gpt_name"]
+        self.user_name = self.loaded_settings["user_name"]
+        self.user_icon_path = self.loaded_settings["user_icon_path"]
+        self.gpt_icon_path = self.loaded_settings["gpt_icon_path"]
+        self.voice_thread.set_voice(self.loaded_settings["voice_name"])
 
         self.initUI()
 
@@ -190,6 +190,10 @@ class MainWindow(QMainWindow):
             }
 
         return settings
+
+    def save_settings(self):
+        pass
+
 
     def contextMenuEvent(self, event):
         context_menu = QMenu(self)
