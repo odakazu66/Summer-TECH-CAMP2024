@@ -9,11 +9,11 @@ from multiprocessing.managers import convert_to_error
 import qtawesome as qta
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget,
                              QHBoxLayout, QComboBox, QLabel, QLineEdit, QScrollArea, QFrame, QSpacerItem, QSizePolicy,
-                             QScrollBar, QMenu, QFileDialog)
+                             QScrollBar, QMenu, QFileDialog, QLayout)
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QColor, QFont, QPixmap, QCursor
 from modules.transcribe import transcribe_file
-from modules.chat import get_gpt_completion, load_conversation, file_path, save_conversation
+from modules.chat import get_gpt_completion, load_conversation, file_path, save_conversation, reset_conversation
 from modules.chat import main as chat_main
 from modules.synthesize import synthesize_speech
 from modules.playback import playback
@@ -233,6 +233,33 @@ class MainWindow(QMainWindow):
         with open(self.settings_path, 'w', encoding="utf-8") as f:
             json.dump(default_settings, f, ensure_ascii=False, indent=2)
 
+    def clear_chat_bubble_layouts(self, vbox_layout: QVBoxLayout):
+        for i in reversed(range(vbox_layout.count())):
+            item = vbox_layout.itemAt(i)
+            child_layout = item.layout()  # Check if the item is a layout
+            if isinstance(child_layout, ChatBubble):
+                # If the layout is a ChatBubble, clear its contents and remove it
+                self.clear_layouts_in_layout(child_layout)
+                vbox_layout.removeItem(item)  # Remove the ChatBubble layout from the parent layout
+                del child_layout  # Delete the ChatBubble layout itself
+
+    def clear_layouts_in_layout(self, layout: QLayout):
+        """Recursively clear all child layouts."""
+        while layout.count():
+            item = layout.takeAt(0)
+            child_layout = item.layout()
+            if child_layout:
+                self.clear_layouts_in_layout(child_layout)
+                del child_layout
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+
+    def reset_conversation_gui(self):
+        reset_conversation(file_path)
+        self.load_conversation_gui()
+        self.clear_chat_bubble_layouts(self.chat_layout)
+
     def contextMenuEvent(self, event):
         context_menu = QMenu(self)
         change_background_action = context_menu.addAction("Change Background")
@@ -240,6 +267,9 @@ class MainWindow(QMainWindow):
 
         reset_settings = context_menu.addAction("Reset Settings")
         reset_settings.triggered.connect(self.reset_settings)
+
+        reset_conversation_action = context_menu.addAction("Reset Conversation")
+        reset_conversation_action.triggered.connect(self.reset_conversation_gui)
 
         context_menu.exec_(self.mapToGlobal(event.pos()))
 
