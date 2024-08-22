@@ -1,4 +1,6 @@
 import sys
+import json
+import os
 import argparse
 import threading
 from datetime import datetime
@@ -80,15 +82,19 @@ class VoiceInteractionThread(QThread):
     def set_voice(self, voice_name):
         self.voice_name = voice_name
 
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.voice_thread = VoiceInteractionThread()
         self.voice_thread.update_chat.connect(self.update_chat)
-        self.gpt_name = "GPT"  # Default GPT name
-        self.user_name = "You"
-        self.user_icon_path = "../images/student-icon.png"
-        self.gpt_icon_path = "../images/chatgpt-icon.png"
+        self.settings_path = "./settings.json"
+        loaded_settings = self.load_settings()
+        self.gpt_name = loaded_settings["gpt_name"]
+        self.user_name = loaded_settings["user_name"]
+        self.user_icon_path = loaded_settings["user_icon_path"]
+        self.gpt_icon_path = loaded_settings["gpt_icon_path"]
+        self.voice_thread.set_voice(loaded_settings["voice_name"])
         self.chat_bubbles_list = []
 
         self.initUI()
@@ -104,7 +110,7 @@ class MainWindow(QMainWindow):
         self.chat_widget = QWidget()
         self.chat_layout = QVBoxLayout(self.chat_widget)
         self.chat_layout.addStretch(1)
-        
+
         self.scroll_area.setWidget(self.chat_widget)
         self.scroll_area.setStyleSheet(load_stylesheet("styles/scrollarea_styles.qss"))
 
@@ -116,7 +122,7 @@ class MainWindow(QMainWindow):
                                         border: 3px solid black;\
                                         border-radius: 30px;} \
                                         QPushButton:pressed {background: #808080}')
-        
+
         animation = qta.Spin(self.mic_button)
         self.spin_icon = qta.icon('fa5s.spinner', color='red', animation=animation)
         self.mic_button.setCheckable(True)
@@ -171,6 +177,21 @@ class MainWindow(QMainWindow):
         # Load Conversation History
         self.load_conversation_gui()
 
+    def load_settings(self):
+        if os.path.exists(self.settings_path) and os.path.isfile(self.settings_path):
+            with open(self.settings_path, 'r') as f:
+                settings = json.load(f)
+        else:
+            settings = {
+                "gpt_name": "GPT",  # Default GPT name
+                "user_name": "You",
+                "user_icon_path": "../images/student-icon.png",
+                "gpt_icon_path": "../images/chatgpt-icon.png",
+                "voice_name": "ja-JP-Standard-A"
+            }
+
+        return settings
+
     def contextMenuEvent(self, event):
         context_menu = QMenu(self)
         change_background_action = context_menu.addAction("Change Background")
@@ -202,7 +223,7 @@ class MainWindow(QMainWindow):
         messages = data["messages"]
         save_conversation(file_path, data)
 
-        if (len(messages) - 1) == 0: # subtract 1 because of system prompt
+        if (len(messages) - 1) == 0:  # subtract 1 because of system prompt
             print("There is no history, using only system prompt")
             return
 
@@ -230,7 +251,7 @@ class MainWindow(QMainWindow):
             self.voice_thread.stop_interaction()
             self.stop_recording_button.setEnabled(False)
             self.keyboard_button.setEnabled(True)
-    
+
     def toggle_keyboard_input(self):
         if self.keyboard_input.isVisible():
             self.keyboard_input.setVisible(False)
@@ -350,6 +371,7 @@ class MainWindow(QMainWindow):
 
     def set_user_name(self, name):
         self.user_name = name
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
