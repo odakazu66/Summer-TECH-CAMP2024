@@ -95,7 +95,6 @@ class MainWindow(QMainWindow):
         self.user_icon_path = loaded_settings["user_icon_path"]
         self.gpt_icon_path = loaded_settings["gpt_icon_path"]
         self.voice_thread.set_voice(loaded_settings["voice_name"])
-        self.chat_bubbles_list = []
 
         self.initUI()
 
