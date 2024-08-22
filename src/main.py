@@ -253,23 +253,33 @@ class MainWindow(QMainWindow):
                 del child_layout
             widget = item.widget()
             if widget:
+                widget.setParent(None)
                 widget.deleteLater()
 
-    def reset_conversation_gui(self):
+    def reset_conversation_all(self):
         reset_conversation(file_path)
-        self.load_conversation_gui()
+        self.reset_conversation_gui()
+
+    def reset_conversation_gui(self):
         self.clear_chat_bubble_layouts(self.chat_layout)
+
+    def reload_conversation(self):
+        self.reset_conversation_gui()
+        QTimer.singleShot(100, self.load_conversation_gui)
 
     def contextMenuEvent(self, event):
         context_menu = QMenu(self)
         change_background_action = context_menu.addAction("Change Background")
         change_background_action.triggered.connect(self.launch_background_dialog)
 
+        reload_conversation_action = context_menu.addAction("Reload Conversation")
+        reload_conversation_action.triggered.connect(self.reload_conversation)
+
         reset_settings = context_menu.addAction("Reset Settings")
         reset_settings.triggered.connect(self.reset_settings)
 
         reset_conversation_action = context_menu.addAction("Reset Conversation")
-        reset_conversation_action.triggered.connect(self.reset_conversation_gui)
+        reset_conversation_action.triggered.connect(self.reset_conversation_all)
 
         context_menu.exec_(self.mapToGlobal(event.pos()))
 
