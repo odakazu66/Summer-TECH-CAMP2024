@@ -6,17 +6,16 @@ from openai import OpenAI
 import os
 import json
 
-
 # グローバルでOpenAIのクライエントを定義すると、どこからでも使える
 client = OpenAI()
 file_path = "conversation.json"
-
 
 # 会話のデフォルト設定を設定する
 default_conversation = {
     "messages": [{"role": "system", "content": "文字制限は20文字以内。あなたは役にたつアシスタントです。"}],
     "temperature": 0.7,
 }
+
 
 class t_color:
     RED = '\033[31m'
@@ -57,6 +56,7 @@ def check_conversation_json_validity(data):
 
     return True
 
+
 # 会話の履歴とパラメータをロード
 def load_conversation(file_path):
     if os.path.exists(file_path):
@@ -71,15 +71,17 @@ def load_conversation(file_path):
                     pass
     return default_conversation
 
+
 # 会話の履歴とパラメータを保存
 def save_conversation(file_path, data):
     with open(file_path, 'w', encoding="utf-8") as file:
         json.dump(data, file, ensure_ascii=False, indent=2)
-    
+
 
 def reset_conversation(file_path):
     save_conversation(file_path, default_conversation)
     return default_conversation["messages"], default_conversation["temperature"]
+
 
 def chat_with_gpt(messages, model="gpt-3.5-turbo", temperature=0.7):
     messages_to_send = prepare_for_api(messages)
@@ -90,9 +92,10 @@ def chat_with_gpt(messages, model="gpt-3.5-turbo", temperature=0.7):
         temperature=temperature
     )
 
-    response_content =  response.choices[0].message.content
+    response_content = response.choices[0].message.content
     print("chatGPT: ", response_content)
     return response_content
+
 
 def prepare_for_api(messages_list_with_sound):
     cleaned_messages = []
@@ -100,6 +103,7 @@ def prepare_for_api(messages_list_with_sound):
         cleaned_message = {key: value for key, value in message.items() if key != 'sound_path'}
         cleaned_messages.append(cleaned_message)
     return cleaned_messages
+
 
 # to implement
 def get_gpt_completion(transcript, user_sound_path=None, gpt_sound_path=None):
@@ -126,11 +130,12 @@ def get_gpt_completion(transcript, user_sound_path=None, gpt_sound_path=None):
         exit(1)
 
     messages.append({"role": "assistant", "content": response, "sound_path": gpt_sound_path})
-    
+
     # 会話を保存
     data["messages"] = messages
     save_conversation(file_path, data)
     return response
+
 
 def print_full_conversation(messages_list):
     for message in messages_list:
@@ -139,6 +144,7 @@ def print_full_conversation(messages_list):
         elif message["role"] == "assistant":
             print(f"chatGPT: {message['content']}")
     print("---------- 以上は会話の履歴 ----------")
+
 
 def main():
     data = load_conversation(file_path)
@@ -157,7 +163,7 @@ def main():
 
     while True:
         user_input = input("あなた：")
-        
+
         if user_input.lower() == "exit":
             print("会話を終了する")
             break
@@ -178,7 +184,6 @@ def main():
             save_conversation(file_path, data)
         except Exception as e:
             print(f"Error: {e}")
-
 
 
 if __name__ == "__main__":

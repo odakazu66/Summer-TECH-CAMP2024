@@ -1,4 +1,6 @@
 import sys
+import json
+import os
 import argparse
 import threading
 from datetime import datetime
@@ -7,11 +9,11 @@ from multiprocessing.managers import convert_to_error
 import qtawesome as qta
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget,
                              QHBoxLayout, QComboBox, QLabel, QLineEdit, QScrollArea, QFrame, QSpacerItem, QSizePolicy,
-                             QScrollBar, QMenu, QFileDialog)
+                             QScrollBar, QMenu, QFileDialog, QLayout)
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QColor, QFont, QPixmap, QCursor
 from modules.transcribe import transcribe_file
-from modules.chat import get_gpt_completion, load_conversation, file_path, save_conversation
+from modules.chat import get_gpt_completion, load_conversation, file_path, save_conversation, reset_conversation
 from modules.chat import main as chat_main
 from modules.synthesize import synthesize_speech
 from modules.playback import playback
@@ -80,16 +82,20 @@ class VoiceInteractionThread(QThread):
     def set_voice(self, voice_name):
         self.voice_name = voice_name
 
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.voice_thread = VoiceInteractionThread()
         self.voice_thread.update_chat.connect(self.update_chat)
-        self.gpt_name = "GPT"  # Default GPT name
-        self.user_name = "You"
-        self.user_icon_path = "../images/student-icon.png"
-        self.gpt_icon_path = "../images/chatgpt-icon.png"
-        self.chat_bubbles_list = []
+        self.settings_path = "./settings.json"
+        self.loaded_settings = self.load_settings()
+        self.gpt_name = self.loaded_settings["gpt_name"]
+        self.user_name = self.loaded_settings["user_name"]
+        self.user_icon_path = self.loaded_settings["user_icon_path"]
+        self.gpt_icon_path = self.loaded_settings["gpt_icon_path"]
+        self.bg_path = self.loaded_settings["bg_path"]
+        self.voice_thread.set_voice(self.loaded_settings["voice_name"])
 
         self.initUI()
 
@@ -101,12 +107,16 @@ class MainWindow(QMainWindow):
         self.scroll_area = ScrollareaWithBackground()
         self.scroll_area.setWidgetResizable(True)
 
+
         self.chat_widget = QWidget()
         self.chat_layout = QVBoxLayout(self.chat_widget)
         self.chat_layout.addStretch(1)
-        
+
         self.scroll_area.setWidget(self.chat_widget)
         self.scroll_area.setStyleSheet(load_stylesheet("styles/scrollarea_styles.qss"))
+
+        if self.bg_path is not None:
+            self.set_scroll_bg(self.bg_path)
 
         self.mic_icon = qta.icon('fa5s.microphone')
         self.mic_button = QPushButton(self.mic_icon, "")
@@ -116,7 +126,7 @@ class MainWindow(QMainWindow):
                                         border: 3px solid black;\
                                         border-radius: 30px;} \
                                         QPushButton:pressed {background: #808080}')
-        
+
         animation = qta.Spin(self.mic_button)
         self.spin_icon = qta.icon('fa5s.spinner', color='red', animation=animation)
         self.mic_button.setCheckable(True)
@@ -171,10 +181,105 @@ class MainWindow(QMainWindow):
         # Load Conversation History
         self.load_conversation_gui()
 
+    def load_settings(self):
+        if os.path.exists(self.settings_path) and os.path.isfile(self.settings_path):
+            with open(self.settings_path, 'r') as f:
+                settings = json.load(f)
+        else:
+            settings = {
+                "gpt_name": "GPT",  # Default GPT name
+                "user_name": "You",
+                "user_icon_path": "../images/student-icon.png",
+                "gpt_icon_path": "../images/chatgpt-icon.png",
+                "voice_name": "ja-JP-Standard-A",
+                "bg_path": None
+            }
+
+        return settings
+
+    def save_settings(self):
+        changed_settings = {
+            "gpt_name": self.gpt_name,  # Default GPT name
+            "user_name": self.user_name,
+            "user_icon_path": self.user_icon_path,
+            "gpt_icon_path": self.gpt_icon_path,
+            "voice_name": self.voice_thread.voice_name,
+            "bg_path": self.bg_path
+        }
+        with open(self.settings_path, 'w', encoding="utf-8") as f:
+            json.dump(changed_settings, f, ensure_ascii=False, indent=2)
+
+    def remove_background(self):
+        if self.bg_path is not None:
+            self.scroll_area.clearBackgroundImage()
+            self.bg_path = None
+
+    def reset_settings(self):
+        default_settings = {
+            "gpt_name": "GPT",  # Default GPT name
+            "user_name": "You",
+            "user_icon_path": "../images/student-icon.png",
+            "gpt_icon_path": "../images/chatgpt-icon.png",
+            "voice_name": "ja-JP-Standard-A",
+            "bg_path": None
+        }
+        self.update_chat_names("GPT", self.gpt_name, default_settings["gpt_name"])
+        self.update_chat_names("You", self.user_name, default_settings["user_name"])
+        self.update_user_icons("GPT", default_settings["gpt_icon_path"])
+        self.update_user_icons("You", default_settings["user_icon_path"])
+        self.voice_thread.set_voice(default_settings["voice_name"])
+        self.remove_background()
+
+        with open(self.settings_path, 'w', encoding="utf-8") as f:
+            json.dump(default_settings, f, ensure_ascii=False, indent=2)
+
+    def clear_chat_bubble_layouts(self, vbox_layout: QVBoxLayout):
+        for i in reversed(range(vbox_layout.count())):
+            item = vbox_layout.itemAt(i)
+            child_layout = item.layout()  # Check if the item is a layout
+            if isinstance(child_layout, ChatBubble):
+                # If the layout is a ChatBubble, clear its contents and remove it
+                self.clear_layouts_in_layout(child_layout)
+                vbox_layout.removeItem(item)  # Remove the ChatBubble layout from the parent layout
+                del child_layout  # Delete the ChatBubble layout itself
+
+    def clear_layouts_in_layout(self, layout: QLayout):
+        """Recursively clear all child layouts."""
+        while layout.count():
+            item = layout.takeAt(0)
+            child_layout = item.layout()
+            if child_layout:
+                self.clear_layouts_in_layout(child_layout)
+                del child_layout
+            widget = item.widget()
+            if widget:
+                widget.setParent(None)
+                widget.deleteLater()
+
+    def reset_conversation_all(self):
+        reset_conversation(file_path)
+        self.reset_conversation_gui()
+
+    def reset_conversation_gui(self):
+        self.clear_chat_bubble_layouts(self.chat_layout)
+
+    def reload_conversation(self):
+        self.reset_conversation_gui()
+        QTimer.singleShot(100, self.load_conversation_gui)
+
     def contextMenuEvent(self, event):
         context_menu = QMenu(self)
         change_background_action = context_menu.addAction("Change Background")
         change_background_action.triggered.connect(self.launch_background_dialog)
+
+        reload_conversation_action = context_menu.addAction("Reload Conversation")
+        reload_conversation_action.triggered.connect(self.reload_conversation)
+
+        reset_settings = context_menu.addAction("Reset Settings")
+        reset_settings.triggered.connect(self.reset_settings)
+
+        reset_conversation_action = context_menu.addAction("Reset Conversation")
+        reset_conversation_action.triggered.connect(self.reset_conversation_all)
 
         context_menu.exec_(self.mapToGlobal(event.pos()))
 
@@ -190,7 +295,9 @@ class MainWindow(QMainWindow):
         )
         if new_bg_path:
             print("new background path", new_bg_path)
+            self.bg_path = new_bg_path
             self.set_scroll_bg(new_bg_path)
+            self.save_settings()
 
     def set_scroll_bg(self, bg_path):
         self.chat_widget.setStyleSheet("background-color: rgba(0, 0, 0, 0);")
@@ -202,7 +309,7 @@ class MainWindow(QMainWindow):
         messages = data["messages"]
         save_conversation(file_path, data)
 
-        if (len(messages) - 1) == 0: # subtract 1 because of system prompt
+        if (len(messages) - 1) == 0:  # subtract 1 because of system prompt
             print("There is no history, using only system prompt")
             return
 
@@ -230,7 +337,7 @@ class MainWindow(QMainWindow):
             self.voice_thread.stop_interaction()
             self.stop_recording_button.setEnabled(False)
             self.keyboard_button.setEnabled(True)
-    
+
     def toggle_keyboard_input(self):
         if self.keyboard_input.isVisible():
             self.keyboard_input.setVisible(False)
@@ -350,6 +457,7 @@ class MainWindow(QMainWindow):
 
     def set_user_name(self, name):
         self.user_name = name
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
