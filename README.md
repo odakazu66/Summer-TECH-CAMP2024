@@ -6,7 +6,9 @@
  4. [使用方法](#使用方法)
 
 ## 目的
-　[Summer-TECH-CAMP2024](https://www.sharen.tut.ac.jp/event/detail.php?y=2024&m=8&d=20#2065) にて使用する音声対話システムの作成。
+[Summer-TECH-CAMP2024](https://www.sharen.tut.ac.jp/event/detail.php?y=2024&m=8&d=20#2065) にて使用する音声対話システムの作成。
+
+> 手順書はこちらのファイルをご参照ください：[手順書](https://github.com/odakazu66/Summer-TECH-CAMP2024/blob/main/%E6%89%8B%E9%A0%86%E6%9B%B8.pdf)
 
 ## システム概要
 このシステムは以下のAPIの３つを使用している。
