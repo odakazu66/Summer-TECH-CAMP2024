@@ -37,7 +37,7 @@ from modules.chat import (
     reset_conversation,
 )
 from modules.chat import main as chat_main
-from modules.synthesize import synthesize_speech
+from modules.synthesize import synthesize_speech, gtts_synthesize_speech
 from modules.playback import playback
 from modules.record import record_audio
 from modules.utils import load_stylesheet
@@ -90,7 +90,10 @@ class VoiceInteractionThread(QThread):
                 transcript, user_sound_path=wav_path, gpt_sound_path=output_filename
             )
 
-            synthesize_speech(completion, output_filename, self.voice_name)
+            if self.use_google:
+                synthesize_speech(completion, output_filename, self.voice_name)
+            else:
+                gtts_synthesize_speech(completion, output_filename, lang="ja")
 
             self.update_chat.emit(
                 {
