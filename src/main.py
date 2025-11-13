@@ -7,13 +7,35 @@ from datetime import datetime
 from multiprocessing.managers import convert_to_error
 
 import qtawesome as qta
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget,
-                             QHBoxLayout, QComboBox, QLabel, QLineEdit, QScrollArea, QFrame, QSpacerItem, QSizePolicy,
-                             QScrollBar, QMenu, QFileDialog, QLayout)
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+    QHBoxLayout,
+    QComboBox,
+    QLabel,
+    QLineEdit,
+    QScrollArea,
+    QFrame,
+    QSpacerItem,
+    QSizePolicy,
+    QScrollBar,
+    QMenu,
+    QFileDialog,
+    QLayout,
+)
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QColor, QFont, QPixmap, QCursor
-from modules.transcribe import transcribe_file
-from modules.chat import get_gpt_completion, load_conversation, file_path, save_conversation, reset_conversation
+from modules.transcribe import transcribe_file, LocalWhisperTranscriber
+from modules.chat import (
+    get_gpt_completion,
+    load_conversation,
+    file_path,
+    save_conversation,
+    reset_conversation,
+)
 from modules.chat import main as chat_main
 from modules.synthesize import synthesize_speech
 from modules.playback import playback
@@ -29,38 +51,54 @@ from gui.scrollarea_with_background import ScrollareaWithBackground
 class VoiceInteractionThread(QThread):
     update_chat = pyqtSignal(dict)
 
-    def __init__(self):
+    def __init__(self, use_google: bool = False):
         super().__init__()
         self.running_event = threading.Event()
         self.recording_event = threading.Event()
         self.running_event.clear()
         self.recording_event.clear()
         self.voice_name = "ja-JP-Standard-A"  # Default voice name
+        self.use_google = use_google
+
+        if not self.use_google:
+            print(
+                "音声認識には Wshiper モデルを使用し、音声合成には Google Translate TTS を使用します。"
+            )
+            self.asr_model = LocalWhisperTranscriber(model_size="base")
+        else:
+            print("音声認識と音声合成には Google Cloud APIs を使用します。")
 
     def run(self):
         while self.running_event.is_set():
             wav_path = record_audio(self.running_event, self.recording_event)
             if not self.running_event.is_set():
                 break
-            transcript = transcribe_file(wav_path)
-            self.update_chat.emit({
-                'sender_id': "You",
-                "transcript": transcript,
-                "sound_path": wav_path
-            })
+
+            if self.use_google:
+                transcript = transcribe_file(wav_path)
+            else:
+                transcript = self.asr_model.transcribe(wav_path)
+
+            self.update_chat.emit(
+                {"sender_id": "You", "transcript": transcript, "sound_path": wav_path}
+            )
 
             now = datetime.now()
             output_filename = now.strftime("../sound/gpt_%Y_%m_%d_%H_%M_%S.wav")
 
-            completion = get_gpt_completion(transcript, user_sound_path=wav_path, gpt_sound_path=output_filename)
+            completion = get_gpt_completion(
+                transcript, user_sound_path=wav_path, gpt_sound_path=output_filename
+            )
 
             synthesize_speech(completion, output_filename, self.voice_name)
 
-            self.update_chat.emit({
-                'sender_id': "GPT",
-                "transcript": completion,
-                "sound_path": output_filename
-            })
+            self.update_chat.emit(
+                {
+                    "sender_id": "GPT",
+                    "transcript": completion,
+                    "sound_path": output_filename,
+                }
+            )
 
             playback(output_filename)
 
@@ -84,7 +122,7 @@ class VoiceInteractionThread(QThread):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, use_google: bool = False):
         super().__init__()
         self.voice_thread = VoiceInteractionThread()
         self.voice_thread.update_chat.connect(self.update_chat)
@@ -107,7 +145,6 @@ class MainWindow(QMainWindow):
         self.scroll_area = ScrollareaWithBackground()
         self.scroll_area.setWidgetResizable(True)
 
-
         self.chat_widget = QWidget()
         self.chat_layout = QVBoxLayout(self.chat_widget)
         self.chat_layout.addStretch(1)
@@ -118,39 +155,45 @@ class MainWindow(QMainWindow):
         if self.bg_path is not None:
             self.set_scroll_bg(self.bg_path)
 
-        self.mic_icon = qta.icon('fa5s.microphone')
+        self.mic_icon = qta.icon("fa5s.microphone")
         self.mic_button = QPushButton(self.mic_icon, "")
 
-        self.mic_button.setStyleSheet('QPushButton {background-color: #C0C0C0; \
+        self.mic_button.setStyleSheet(
+            "QPushButton {background-color: #C0C0C0; \
                                         height: 70px; \
                                         border: 3px solid black;\
                                         border-radius: 30px;} \
-                                        QPushButton:pressed {background: #808080}')
+                                        QPushButton:pressed {background: #808080}"
+        )
 
         animation = qta.Spin(self.mic_button)
-        self.spin_icon = qta.icon('fa5s.spinner', color='red', animation=animation)
+        self.spin_icon = qta.icon("fa5s.spinner", color="red", animation=animation)
         self.mic_button.setCheckable(True)
         self.mic_button.clicked.connect(self.toggle_interaction)
 
-        stop_icon = qta.icon('fa5s.microphone-slash')
+        stop_icon = qta.icon("fa5s.microphone-slash")
         self.stop_recording_button = QPushButton(stop_icon, "")
-        self.stop_recording_button.setStyleSheet('QPushButton {background-color: #C0C0C0; \
+        self.stop_recording_button.setStyleSheet(
+            "QPushButton {background-color: #C0C0C0; \
                                                   height: 50px; \
                                                   border: 3px solid red;\
                                                   border-radius: 25px;} \
-                                                  QPushButton:pressed {background: #808080}')
+                                                  QPushButton:pressed {background: #808080}"
+        )
         self.stop_recording_button.clicked.connect(self.stop_recording)
         self.stop_recording_button.setEnabled(False)
 
         # Add Keyboard Input
-        keyboard_icon = qta.icon('fa5s.keyboard')
+        keyboard_icon = qta.icon("fa5s.keyboard")
         self.keyboard_button = QPushButton(keyboard_icon, "")
 
-        self.keyboard_button.setStyleSheet('QPushButton {background-color: #C0C0C0; \
+        self.keyboard_button.setStyleSheet(
+            "QPushButton {background-color: #C0C0C0; \
                                                   height: 50px; \
                                                   border: 3px solid black;\
                                                   border-radius: 25px;} \
-                                                  QPushButton:pressed {background: #808080}')
+                                                  QPushButton:pressed {background: #808080}"
+        )
         self.keyboard_button.clicked.connect(self.toggle_keyboard_input)
 
         self.keyboard_input = QLineEdit()
@@ -158,11 +201,13 @@ class MainWindow(QMainWindow):
         self.keyboard_input.setFont(font)
         self.keyboard_input.returnPressed.connect(self.send_keyboard_input)
         self.keyboard_input.setVisible(False)
-        self.keyboard_input.setStyleSheet("""
+        self.keyboard_input.setStyleSheet(
+            """
             QLineEdit {
                 margin: 2px;
             } 
-        """)
+        """
+        )
 
         layout = QVBoxLayout()
         button_layout = QHBoxLayout()
@@ -183,7 +228,7 @@ class MainWindow(QMainWindow):
 
     def load_settings(self):
         if os.path.exists(self.settings_path) and os.path.isfile(self.settings_path):
-            with open(self.settings_path, 'r') as f:
+            with open(self.settings_path, "r") as f:
                 settings = json.load(f)
         else:
             settings = {
@@ -192,7 +237,7 @@ class MainWindow(QMainWindow):
                 "user_icon_path": "../images/student-icon.png",
                 "gpt_icon_path": "../images/chatgpt-icon.png",
                 "voice_name": "ja-JP-Standard-A",
-                "bg_path": None
+                "bg_path": None,
             }
 
         return settings
@@ -204,9 +249,9 @@ class MainWindow(QMainWindow):
             "user_icon_path": self.user_icon_path,
             "gpt_icon_path": self.gpt_icon_path,
             "voice_name": self.voice_thread.voice_name,
-            "bg_path": self.bg_path
+            "bg_path": self.bg_path,
         }
-        with open(self.settings_path, 'w', encoding="utf-8") as f:
+        with open(self.settings_path, "w", encoding="utf-8") as f:
             json.dump(changed_settings, f, ensure_ascii=False, indent=2)
 
     def remove_background(self):
@@ -221,7 +266,7 @@ class MainWindow(QMainWindow):
             "user_icon_path": "../images/student-icon.png",
             "gpt_icon_path": "../images/chatgpt-icon.png",
             "voice_name": "ja-JP-Standard-A",
-            "bg_path": None
+            "bg_path": None,
         }
         self.update_chat_names("GPT", self.gpt_name, default_settings["gpt_name"])
         self.update_chat_names("You", self.user_name, default_settings["user_name"])
@@ -230,7 +275,7 @@ class MainWindow(QMainWindow):
         self.voice_thread.set_voice(default_settings["voice_name"])
         self.remove_background()
 
-        with open(self.settings_path, 'w', encoding="utf-8") as f:
+        with open(self.settings_path, "w", encoding="utf-8") as f:
             json.dump(default_settings, f, ensure_ascii=False, indent=2)
 
     def clear_chat_bubble_layouts(self, vbox_layout: QVBoxLayout):
@@ -240,7 +285,9 @@ class MainWindow(QMainWindow):
             if isinstance(child_layout, ChatBubble):
                 # If the layout is a ChatBubble, clear its contents and remove it
                 self.clear_layouts_in_layout(child_layout)
-                vbox_layout.removeItem(item)  # Remove the ChatBubble layout from the parent layout
+                vbox_layout.removeItem(
+                    item
+                )  # Remove the ChatBubble layout from the parent layout
                 del child_layout  # Delete the ChatBubble layout itself
 
     def clear_layouts_in_layout(self, layout: QLayout):
@@ -287,11 +334,7 @@ class MainWindow(QMainWindow):
         options = QFileDialog.Options()
         image_filter = "Image Files (*.png *.jpg *.jpeg *.bmp);;All Files (*)"
         new_bg_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Select an Image",
-            "",
-            image_filter,
-            options=options
+            self, "Select an Image", "", image_filter, options=options
         )
         if new_bg_path:
             print("new background path", new_bg_path)
@@ -315,13 +358,17 @@ class MainWindow(QMainWindow):
 
         for message in messages:
             if message["role"] == "user":
-                if 'sound_path' in message:
-                    self.append_chat_message("You", message["content"], sound_path=message["sound_path"])
+                if "sound_path" in message:
+                    self.append_chat_message(
+                        "You", message["content"], sound_path=message["sound_path"]
+                    )
                 else:
                     self.append_chat_message("You", message["content"])
             elif message["role"] == "assistant":
-                if 'sound_path' in message:
-                    self.append_chat_message("GPT", message["content"], sound_path=message["sound_path"])
+                if "sound_path" in message:
+                    self.append_chat_message(
+                        "GPT", message["content"], sound_path=message["sound_path"]
+                    )
                 else:
                     self.append_chat_message("GPT", message["content"])
 
@@ -348,23 +395,17 @@ class MainWindow(QMainWindow):
     def send_keyboard_input(self):
         text = self.keyboard_input.text()
         if text.strip():
-            #self.update_chat("You", text)
-            self.update_chat({
-                "sender_id": "You",
-                "transcript": text
-            })
+            # self.update_chat("You", text)
+            self.update_chat({"sender_id": "You", "transcript": text})
             completion = get_gpt_completion(text)
-            #self.update_chat("GPT", completion)
-            self.update_chat({
-                "sender_id": "GPT",
-                "transcript": completion
-            })
+            # self.update_chat("GPT", completion)
+            self.update_chat({"sender_id": "GPT", "transcript": completion})
             self.keyboard_input.clear()
 
     def update_chat(self, data):
-        sender_id = data.get('sender_id')
-        message = data.get('transcript')
-        sound_path = data.get('sound_path')
+        sender_id = data.get("sender_id")
+        message = data.get("transcript")
+        sound_path = data.get("sound_path")
 
         self.append_chat_message(sender_id, message, sound_path=sound_path)
         self.voice_thread.start_recording()
@@ -409,7 +450,9 @@ class MainWindow(QMainWindow):
                 # Loop through the items in the bubble container to find the QFrame (chat bubble)
                 for j in range(bubble_container.count()):
                     item = bubble_container.itemAt(j).widget()
-                    if isinstance(item, QFrame):  # Ensure the item is a QFrame (chat bubble)
+                    if isinstance(
+                        item, QFrame
+                    ):  # Ensure the item is a QFrame (chat bubble)
                         bubble = item
 
                         # Get the QVBoxLayout inside the QFrame
@@ -463,6 +506,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--use-gui", action="store_true", help="use the gui")
+    parser.add_argument(
+        "--use-google",
+        action="store_true",
+        help="use Google Cloud APIs (default: use whisper and google translate tts)",
+    )
 
     args = parser.parse_args()
 
@@ -470,6 +518,6 @@ if __name__ == "__main__":
         chat_main()
     else:
         app = QApplication(sys.argv)
-        mainWindow = MainWindow()
+        mainWindow = MainWindow(use_google=args.use_google)
         mainWindow.show()
         sys.exit(app.exec_())
