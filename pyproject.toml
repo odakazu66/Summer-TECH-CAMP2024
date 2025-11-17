@@ -1,0 +1,21 @@
+[project]
+name = "summer-tech-camp2024"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = "==3.13"
+
+dependencies = [
+    "colorama",
+    "exceptiongroup",
+    "google-cloud-speech",
+    "google-cloud-texttospeech",
+    "grpcio-status",
+    "gTTS",
+    "librosa",
+    "openai==2.8.0", # Pinned, as v3+ is a different API
+    "openai-whisper",
+    "PyAudio",
+    "PyQt5",
+    "QtAwesome",
+]
