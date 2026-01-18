@@ -1,4 +1,4 @@
-import whisper
+from faster_whisper import WhisperModel
 from google.cloud import speech
 
 
@@ -29,9 +29,25 @@ class LocalWhisperTranscriber:
     """ローカルでWhisperモデルを使用して音声ファイルを文字起こしするクラス。"""
 
     def __init__(self, model_size: str = "base"):
-        self.model = whisper.load_model(model_size)
+        # Initialize faster-whisper model
+        # compute_type="int8" provides best CPU performance
+        self.model = WhisperModel(
+            model_size,
+            device="cpu",
+            compute_type="int8"
+        )
 
     def transcribe(self, audio_file: str) -> str:
         """指定された音声ファイルをWhisperモデルで文字起こしする。"""
-        result = self.model.transcribe(audio_file, language="ja", fp16=False)
-        return result["text"]
+        # faster-whisper returns (segments_generator, info) instead of dict
+        segments, info = self.model.transcribe(
+            audio_file,
+            language="ja",
+            beam_size=5,
+            vad_filter=True  # Voice activity detection for better accuracy
+        )
+
+        # Combine all segments into single text
+        transcript = "".join([segment.text for segment in segments])
+
+        return transcript

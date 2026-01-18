@@ -1,8 +1,7 @@
 # synthesize.py
 from google.cloud import texttospeech
 from gtts import gTTS
-import librosa
-import soundfile as sf
+from pydub import AudioSegment
 import os
 
 
@@ -36,9 +35,10 @@ def gtts_synthesize_speech(text: str, output_file: str, lang: str = "ja"):
     tts = gTTS(text=text, lang=lang, slow=False)
     tts.save(temp_mp3)
 
-    # Convert to WAV
-    y, sr = librosa.load(temp_mp3, sr=None)
-    sf.write(output_file, y, sr)
+    # Convert MP3 to WAV using pydub
+    audio = AudioSegment.from_mp3(temp_mp3)
+    audio = audio.set_frame_rate(44100).set_channels(1).set_sample_width(2)  # 44.1kHz, mono, 16-bit
+    audio.export(output_file, format="wav")
 
     # Clean up temporary MP3
     os.remove(temp_mp3)
