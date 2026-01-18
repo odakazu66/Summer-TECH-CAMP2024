@@ -36,6 +36,15 @@
 
 * [https://docs.astral.sh/uv/getting-started/installation/](https://docs.astral.sh/uv/getting-started/installation/)
 
+### クロスプラットフォーム対応について
+
+本プロジェクトは **Windows、macOS、Linux** での動作をサポートしています。PyQt5 のバージョン互換性の問題を解決するため、プラットフォームごとに適切なバージョンが自動的にインストールされます。
+
+* Windows: PyQt5-Qt5 5.15.2 を使用
+* macOS / Linux: PyQt5-Qt5 の最新版を使用
+
+`uv sync` を実行すると、お使いのプラットフォームに応じた適切なバージョンが自動的にインストールされます。
+
 ### 前準備
 
 本システムは OpenAI（必須）と、デフォルトで faster-whisper / Google Translate TTS（必須）を利用します。

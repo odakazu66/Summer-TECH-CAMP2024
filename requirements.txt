@@ -140,7 +140,9 @@ pydub==0.25.1
 pyqt5==5.15.11
     # via summer-tech-camp2024 (pyproject.toml)
 pyqt5-qt5==5.15.18
-    # via pyqt5
+    # via
+    #   summer-tech-camp2024 (pyproject.toml)
+    #   pyqt5
 pyqt5-sip==12.18.0
     # via pyqt5
 pyyaml==6.0.3
