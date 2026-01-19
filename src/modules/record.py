@@ -4,6 +4,7 @@ import numpy as np
 from datetime import datetime
 import time
 import threading
+from pathlib import Path
 
 # 音声録音パラメータ
 SAMPLE_FORMAT = miniaudio.SampleFormat.SIGNED16  # 16ビットの音声フォーマット
@@ -96,16 +97,22 @@ def record_audio(running_event, recording_event):
 
     # 録音したデータをwavファイルとして保存
     now = datetime.now()
-    output_filename = now.strftime("../sound/user_%Y_%m_%d_%H_%M_%S.wav")
+    # Use pathlib for cross-platform path handling and resolve to absolute path
+    sound_dir = Path(__file__).parent.parent.parent / "sound"
+    sound_dir.mkdir(exist_ok=True)
+    output_filename = sound_dir / now.strftime("user_%Y_%m_%d_%H_%M_%S.wav")
 
-    with wave.open(output_filename, 'wb') as wf:
+    # Convert to string for wave.open, using os.fspath for proper encoding
+    output_path_str = str(output_filename.resolve())
+
+    with wave.open(output_path_str, 'wb') as wf:
         wf.setnchannels(CHANNELS)
         wf.setsampwidth(2)  # 16-bit = 2 bytes
         wf.setframerate(RATE)
         wf.writeframes(b''.join(frames))
 
-    print(f"録音が完了しました。{output_filename}に保存されました。")
-    return output_filename
+    print(f"録音が完了しました。{output_path_str}に保存されました。")
+    return output_path_str
 
 if __name__ == "__main__":
     running = threading.Event()

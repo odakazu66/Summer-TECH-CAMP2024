@@ -1,10 +1,19 @@
 import sys
 import json
 import os
+
+# Set UTF-8 encoding before importing other libraries
+# This ensures PyAV and other C libraries use UTF-8 for file paths
+os.environ['PYTHONUTF8'] = '1'
+if sys.platform.startswith('linux'):
+    os.environ.setdefault('LC_ALL', 'C.UTF-8')
+    os.environ.setdefault('LANG', 'C.UTF-8')
+
 import argparse
 import threading
 from datetime import datetime
 from multiprocessing.managers import convert_to_error
+from pathlib import Path
 
 import qtawesome as qta
 from PyQt5.QtWidgets import (
@@ -119,7 +128,10 @@ class VoiceInteractionThread(QThread):
             )
 
             now = datetime.now()
-            output_filename = now.strftime("../sound/gpt_%Y_%m_%d_%H_%M_%S.wav")
+            # Use pathlib for cross-platform path handling and resolve to absolute path
+            sound_dir = Path(__file__).parent.parent / "sound"
+            sound_dir.mkdir(exist_ok=True)
+            output_filename = str((sound_dir / now.strftime("gpt_%Y_%m_%d_%H_%M_%S.wav")).resolve())
 
             completion = get_gpt_completion(
                 transcript, user_sound_path=wav_path, gpt_sound_path=output_filename
