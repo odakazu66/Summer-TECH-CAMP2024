@@ -163,3 +163,52 @@ uv sync
 cd src/
 uv run main.py --use-gui --use-google
 ```
+
+## トラブルシューティング
+
+### Windows でアプリが起動直後に閉じる場合
+
+Windows 環境で `uv run main.py --use-gui` を実行すると、「音声認識には Wshiper モデルを使用し、音声合成には Google Translate TTS を使用します。」というメッセージが表示された後、アプリが閉じてしまう場合があります。
+
+これは Whisper モデルの初期化に失敗している可能性があります。以下の解決策を試してください：
+
+#### 解決策 1: Google Cloud API を使用する
+
+Google Cloud APIのキーを取得し、faster-whisper の代わりに Google Cloud の Speech-to-Text API を使用してください：
+
+```bash
+uv run main.py --use-gui --use-google
+```
+
+**注意**: この方法を使用するには、事前に Google Cloud の認証情報を設定する必要があります（上記の「前準備」セクションを参照）。
+
+#### 解決策 2: 依存関係の再インストール
+
+依存関係が正しくインストールされていない可能性があります。以下のコマンドで再インストールしてください：
+
+```bash
+# 仮想環境を削除して再作成
+uv sync --reinstall
+```
+
+#### 解決策 3: ffmpeg の確認
+
+ffmpeg が正しくインストールされているか確認してください：
+
+```powershell
+ffmpeg -version
+```
+
+エラーが出る場合は、上記の「ffmpeg のインストール」セクションを参照してインストールしてください。
+
+#### 解決策 4: エラーメッセージの確認
+
+アプリケーションを起動すると、マイクボタンをクリックした際にエラーダイアログが表示されるようになりました。エラーメッセージを確認して、具体的な問題を特定してください。
+
+#### それでも解決しない場合
+
+Issue を作成して、以下の情報を含めて報告してください：
+* Windows のバージョン
+* Python のバージョン（`python --version`）
+* エラーメッセージの全文
+* `uv sync` の実行結果

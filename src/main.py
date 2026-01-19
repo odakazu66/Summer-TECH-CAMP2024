@@ -25,6 +25,7 @@ from PyQt5.QtWidgets import (
     QMenu,
     QFileDialog,
     QLayout,
+    QMessageBox,
 )
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QColor, QFont, QPixmap, QCursor
@@ -50,6 +51,7 @@ from gui.scrollarea_with_background import ScrollareaWithBackground
 
 class VoiceInteractionThread(QThread):
     update_chat = pyqtSignal(dict)
+    initialization_error = pyqtSignal(str)
 
     def __init__(self, use_google: bool = False):
         super().__init__()
@@ -59,16 +61,49 @@ class VoiceInteractionThread(QThread):
         self.recording_event.clear()
         self.voice_name = "ja-JP-Standard-A"  # Default voice name
         self.use_google = use_google
+        self.asr_model = None
+        self.model_init_error = None
 
         if not self.use_google:
             print(
                 "音声認識には Wshiper モデルを使用し、音声合成には Google Translate TTS を使用します。"
             )
-            self.asr_model = LocalWhisperTranscriber(model_size="base")
         else:
             print("音声認識と音声合成には Google Cloud APIs を使用します。")
 
+    def _initialize_asr_model(self):
+        """Lazy initialization of ASR model with error handling."""
+        if self.asr_model is not None or self.model_init_error is not None:
+            return
+
+        try:
+            print("Whisperモデルを初期化しています...")
+            self.asr_model = LocalWhisperTranscriber(model_size="base")
+            print("Whisperモデルの初期化が完了しました。")
+        except Exception as e:
+            self.model_init_error = str(e)
+            print(f"エラー: Whisperモデルの初期化に失敗しました: {e}")
+            print("可能な解決策:")
+            print("1. 必要な依存関係がすべてインストールされているか確認してください")
+            print("2. --use-google フラグを使用してGoogle Cloud APIを使用してください")
+            raise
+
     def run(self):
+        # Initialize ASR model on first use (not during __init__)
+        if not self.use_google:
+            try:
+                self._initialize_asr_model()
+            except Exception as e:
+                # Model initialization failed, emit error signal and stop
+                error_msg = (
+                    f"Whisperモデルの初期化に失敗しました:\n\n{str(e)}\n\n"
+                    f"解決策:\n"
+                    f"1. 必要な依存関係がすべてインストールされているか確認してください\n"
+                    f"2. --use-google フラグを使用してGoogle Cloud APIを試してください"
+                )
+                self.initialization_error.emit(error_msg)
+                return
+
         while self.running_event.is_set():
             wav_path = record_audio(self.running_event, self.recording_event)
             if not self.running_event.is_set():
@@ -127,8 +162,9 @@ class VoiceInteractionThread(QThread):
 class MainWindow(QMainWindow):
     def __init__(self, use_google: bool = False):
         super().__init__()
-        self.voice_thread = VoiceInteractionThread()
+        self.voice_thread = VoiceInteractionThread(use_google=use_google)
         self.voice_thread.update_chat.connect(self.update_chat)
+        self.voice_thread.initialization_error.connect(self.show_initialization_error)
         self.settings_path = "./settings.json"
         self.loaded_settings = self.load_settings()
         self.gpt_name = self.loaded_settings["gpt_name"]
@@ -503,6 +539,21 @@ class MainWindow(QMainWindow):
 
     def set_user_name(self, name):
         self.user_name = name
+
+    def show_initialization_error(self, error_msg: str):
+        """Display an error dialog when model initialization fails."""
+        QMessageBox.critical(
+            self,
+            "初期化エラー",
+            error_msg,
+            QMessageBox.Ok
+        )
+        # Reset the microphone button state
+        if self.mic_button.isChecked():
+            self.mic_button.setChecked(False)
+            self.mic_button.setIcon(self.mic_icon)
+            self.stop_recording_button.setEnabled(False)
+            self.keyboard_button.setEnabled(True)
 
 
 if __name__ == "__main__":

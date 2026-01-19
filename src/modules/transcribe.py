@@ -30,11 +30,36 @@ class LocalWhisperTranscriber:
 
     def __init__(self, model_size: str = "base"):
         # Initialize faster-whisper model
-        # compute_type="int8" provides best CPU performance
-        self.model = WhisperModel(
-            model_size,
-            device="cpu",
-            compute_type="int8"
+        # Try multiple compute types for better compatibility
+        import platform
+
+        compute_types = ["int8", "float32"]
+
+        # On Windows, prefer float32 for better compatibility
+        if platform.system() == "Windows":
+            compute_types = ["float32", "int8"]
+
+        last_error = None
+        for compute_type in compute_types:
+            try:
+                print(f"Trying to load Whisper model with compute_type={compute_type}...")
+                self.model = WhisperModel(
+                    model_size,
+                    device="cpu",
+                    compute_type=compute_type
+                )
+                print(f"Successfully loaded Whisper model with compute_type={compute_type}")
+                return
+            except Exception as e:
+                last_error = e
+                print(f"Failed to load with compute_type={compute_type}: {e}")
+                continue
+
+        # If we get here, all compute types failed
+        raise RuntimeError(
+            f"Failed to initialize Whisper model with any compute type. "
+            f"Last error: {last_error}. "
+            f"Please ensure all dependencies are properly installed."
         )
 
     def transcribe(self, audio_file: str) -> str:
