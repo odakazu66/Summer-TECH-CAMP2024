@@ -1,0 +1,27 @@
+[project]
+name = "summer-tech-camp2024"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = "~=3.12.0"
+dependencies = [
+    "colorama",
+    "exceptiongroup",
+    "google-cloud-speech",
+    "google-cloud-texttospeech",
+    "grpcio-status",
+    "gTTS",
+    "openai==2.8.0", # Pinned, as v3+ is a different API
+    "PyQt5==5.15.11",
+    "PyQt5-Qt5==5.15.2; sys_platform == 'win32'",  # Windows only
+    "PyQt5-Qt5>=5.15.2; sys_platform != 'win32'",  # macOS/Linux use latest
+    "QtAwesome",
+    "miniaudio>=1.59",
+    "faster-whisper>=1.0.0",
+    "pydub>=0.25.1",
+    "numpy",
+]
+
+[tool.uv]
+# Support cross-platform PyQt5 with different versions per platform
+environments = ["sys_platform == 'darwin'", "sys_platform == 'win32'", "sys_platform == 'linux'"]

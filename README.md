@@ -1,115 +1,165 @@
 # Summer-TECH-CAMP2024
+
 ## 目次
- 1. [目的](#目的)
- 2. [システム概要](#システム概要)
- 3. [インストール方法](#インストール方法)
- 4. [使用方法](#使用方法)
+
+1. [目的](#目的)
+2. [システム概要](#システム概要)
+3. [インストール方法](#インストール方法)
+4. [使用方法](#使用方法)
 
 ## 目的
+
 [Summer-TECH-CAMP2024](https://www.sharen.tut.ac.jp/event/detail.php?y=2024&m=8&d=20#2065) にて使用する音声対話システムの作成。
 
 > 手順書はこちらのファイルをご参照ください：[手順書](https://github.com/odakazu66/Summer-TECH-CAMP2024/blob/main/%E6%89%8B%E9%A0%86%E6%9B%B8.pdf)
 
 ## システム概要
-このシステムは以下のAPIの３つを使用している。
-- OpenAI API
-- Google Cloud API
-   - Text to Speech
-   - Speech to Text
 
- **○環境**
-使用したライブラリーは以下、または`requirements.txt`の中に示している。
+このシステムは以下のコンポーネントを利用しています（デフォルト構成）：
 
-| ライブラリー  | バージョン |
-| --------------------- | ---------- |
-| annotated-types | 0.7.0 |
-| anyio | 4.4.0 |
-| cachetools | 5.3.3 |
-| certifi | 2024.6.2 |
-| charset-normalizer | 3.3.2 |
-| colorama | 0.4.6 |
-| distro | 1.9.0 |
-| exceptiongroup | 1.2.1 |
-| google-api-core | 2.19.1 |
-| google-auth | 2.30.0 |
-| google-cloud-speech | 2.26.0 |
-| google-cloud-texttospeech | 2.16.3 |
-| googleapis-common-protos | 1.63.2 |
-| grpcio | 1.64.1 |
-| grpcio-status | 1.62.2 |
-| h11 | 0.14.0 |
-| httpcore | 1.0.5 |
-| httpx | 0.27.0 |
-| idna | 3.7 |
-| numpy | 2.0.0 |
-| openai | 1.35.7 |
-| proto-plus | 1.24.0 |
-| protobuf | 4.25.3 |
-| PyAudio | 0.2.14 |
-| pyasn1 | 0.6.0 |
-| pyasn1_modules | 0.4.0 |
-| pydantic | 2.7.4 |
-| pydantic_core | 2.18.4 |
-| QtAwesome | 1.3.1 |
-| requests | 2.32.3 |
-| rsa | 4.9 |
-| sniffio | 1.3.1 |
-| tqdm | 4.66.4 |
-| typing_extensions | 4.12.2 |
-| urllib3 | 2.2.2 |
-| PyQt5 | 5.15.10 |
+* OpenAI API — 対話生成
+* faster-whisper — 音声認識（ローカル実行の高速ASR）
+* Google Translate の TTS — 音声合成
+
+※ Google Cloud の Speech-to-Text / Text-to-Speech は**デフォルトでは使用しません**。
+利用したい場合は、事前に Google Cloud の API を準備し、環境変数を設定した上で、起動時に `--use-google` フラグを指定してください（後述）。
+
+**○環境**
+
+* 必要な Python ライブラリは `requirements.txt` にまとめています。Pythonの仮想環境の利用を推奨します。
 
 ## インストール方法
+
+### uv のインストール
+
+本プロジェクトでは `uv` を使用します。以下の公式ドキュメントを参照し、事前に `uv` をインストールしてください。
+
+* [https://docs.astral.sh/uv/getting-started/installation/](https://docs.astral.sh/uv/getting-started/installation/)
+
+### クロスプラットフォーム対応について
+
+本プロジェクトは **Windows、macOS、Linux** での動作をサポートしています。PyQt5 のバージョン互換性の問題を解決するため、プラットフォームごとに適切なバージョンが自動的にインストールされます。
+
+* Windows: PyQt5-Qt5 5.15.2 を使用
+* macOS / Linux: PyQt5-Qt5 の最新版を使用
+
+`uv sync` を実行すると、お使いのプラットフォームに応じた適切なバージョンが自動的にインストールされます。
+
 ### 前準備
-本システムは以下の二つのAPIを利用しています。
-- OpenAI: 対話システムの返事作成用
-- Google Cloud: 音声認識および音声生成用
 
-そこで、それぞれのAPIキーを事前に取得し、システムに登録する必要があります。登録手法は複数ありますが、以下にその一つを示しています。
+本システムは OpenAI（必須）と、デフォルトで faster-whisper / Google Translate TTS（必須）を利用します。
+各 API キーや認証情報は、それぞれの公式サイトから事前に取得してください。取得手順の詳細については、以下の手順書にまとめています。
 
-> 注意：以下の両方の手順では現在開いているセッションに影響がありません、新しターミナルを開いてから、`main.py`を実行してください。
+> 手順書： [手順書](https://github.com/odakazu66/Summer-TECH-CAMP2024/blob/main/%E6%89%8B%E9%A0%86%E6%9B%B8.pdf)
 
-#### 1. OpenAIのAPIキー
-OpenAIのキーを環境変数に埋め込むために、以下のコマンドにAPIキーを代入し、実行してください。
-##### Windows:
+Google Cloud の API を使用したい場合は、その認証ファイルを配置して環境変数を設定してください（任意）。
+
+#### 1. OpenAI の API キー
+
+取得した OpenAI の API キーを環境変数に設定してください。
+
+##### Windows (PowerShell)
+
+PowerShell を開き、以下のコマンドを**実行**してください：
+
 ```powershell
 setx OPENAI_API_KEY "your-api-key-here"
 ```
-##### Mac OSまたはLinux環境
-この環境では以下のコマンドを自分のシェルの設定ファイル(.bashrc, .zshrcなど)に以下のコマンドを張り付けてください。
+
+##### macOS / Linux
+
+シェル設定ファイル（`.bashrc`, `.zshrc` 等）に追記して下さい：
+
 ```bash
 export OPENAI_API_KEY="your-api-key-here"
 ```
 
-#### 2. Google Cloud のAPIキー
-まず、そのAPIの`.json`ファイルをダウンロードし、適当な所に入れてください。その後、そのファイルまでのパスをコピーし、以下のコマンドの引数として代入して、実行してください。
-##### Windows:
+#### 2. （任意）Google Cloud の認証
+
+Google Cloud の API（利用する場合）については、サービスアカウントの JSON をダウンロードしておき、環境変数 `GOOGLE_APPLICATION_CREDENTIALS` にフルパスをセットしてください。
+
+##### Windows (PowerShell)
+
+PowerShell を開き、以下のコマンドを**実行**してください：
+
 ```powershell
 setx GOOGLE_APPLICATION_CREDENTIALS "C:\path\to\your\credentials.json"
 ```
-##### Mac OSまたはLinux環境
-この環境では以下のコマンドを自分のシェルの設定ファイル(.bashrc, .zshrcなど)に以下のコマンドを張り付けてください。
+
+##### macOS / Linux
+
+以下の行をシェル設定ファイル（`.bashrc`, `.zshrc` 等）に追記してください：
+
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/your/credentials.json"
 ```
 
-### 環境の準備
-まずは、`requirements.txt`に記述しているライブラリーをインストールする。ここでは、仮想環境が必要であれば自分で準備してください。
-```bash
-pip install -r requirements.txt
-```
+> 補足：Google Cloud を使う場合は、起動時に `--use-google` フラグを指定します（例：`uv run main.py --use-gui --use-google`）。
+
+### ffmpeg のインストール（pydub と faster-whisper のため）
+
+`pydub` は内部で `ffmpeg` を利用します。また、`faster-whisper` や一部の音声処理処理も `ffmpeg` を必要とする場合があります。OS ごとのインストール方法の例を示します。
+
+* **Windows**
+
+  * 推奨：パッケージマネージャを利用（例: `winget`, `chocolatey`）
+    * 例（このコマンドは管理者として実行した`Windows Powershell`の中で実行してください）: `winget install ffmpeg`
+    * または: `choco install ffmpeg`
+  * 手動ダウンロード：Windows 用ビルド（静的ビルド）は [gyan.dev のビルド配布ページ](https://www.gyan.dev/ffmpeg/builds/) からダウンロードできます。
+    * この場合は、ダウンロードした bin フォルダ（`ffmpeg.exe` のある場所）を PATH に追加してください。
+
+* **macOS**
+
+  * Homebrew があれば：
+
+    ```bash
+    brew install ffmpeg
+    ```
+
+* **Linux (Debian/Ubuntu)**
+
+  ```bash
+  sudo apt update
+  sudo apt install ffmpeg
+  ```
+
+他のディストリビューションでは `yum` / `dnf` / `pacman` 等を利用してください。
+
+* **注意**
+  * インストール後、`ffmpeg` がコマンドラインから `ffmpeg -version` で確認できることを確かめてください。
 
 ## 使用方法
-環境が準備できたら、`src/`フォルダーに入る
+本プロジェクトでは `uv` コマンドを使って実行します（`uv sync` → `uv run` のワークフロー）。
+
+1. まずリポジトリルートで同期処理を行います：
+```bash
+uv sync
+````
+
+2. `src/` に移動してアプリを起動します。
+
 ```bash
 cd src/
-```
-### GUIなしで実行
-```bash
-python main.py
-```
-### GUIありで実行
-```bash
-python main.py --use-gui
+uv run main.py [--use-gui] [--use-google]
 ```
 
+* `--use-gui` : GUI を有効にして起動します。
+* `--use-google` : Google Cloud の STT / TTS を使用する（事前に `GOOGLE_APPLICATION_CREDENTIALS` を設定しておくこと）。
+
+### 例
+
+* GUI を使ってデフォルト（faster-whisper + Google Translate TTS）で起動：
+
+```bash
+uv sync
+cd src/
+uv run main.py --use-gui
+```
+
+* GUI を使い、Google Cloud の API を利用して起動（API キー / 認証を設定済みの場合）：
+
+```bash
+uv sync
+cd src/
+uv run main.py --use-gui --use-google
+```
